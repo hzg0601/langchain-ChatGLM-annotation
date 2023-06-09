@@ -1,4 +1,13 @@
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+# faiss 是相似度检索方案中的佼佼者，是来自 Meta AI（原 Facebook Research）的开源项目[1]，也是目前最流行的、效率比较高的相似度检索方案之一。
+#  Faiss 就是解决这类海量数据场景下，想要快速得到和查询内容相似结果（Top K 个相似结果），为数不多的靠谱方案之一。
+
+# 和我们在常见数据库里指定字段类型一样， Faiss 也能够指定数据类型，比如 IndexFlatL2、IndexHNSW、IndexIVF 等二十来种类型，
+# 虽然类型名称看起来比较怪，和传统的字符串、数字、日期等数据看起来不大一样，但这些场景将能够帮助我们在不同的数据规模、业务场景下，
+# 带来出乎意料的高性能数据检索能力。反过来说，在不同的业务场景、不同数据量级、不同索引类型和参数大小的情况下，
+# 我们的应用性能指标也会存在非常大的差异，如何选择合适的索引，也是一门学问。
+# 除了支持丰富的索引类型之外，faiss 还能够运行在 CPU 和 GPU 两种环境中，同时可以使用 C++ 或者 Python 进行调用，
+# 也有开发者做了 Go-Faiss ，来满足 Golang 场景下的 faiss 使用。
 from langchain.vectorstores import FAISS
 from langchain.document_loaders import UnstructuredFileLoader, TextLoader
 from configs.model_config import *
@@ -9,6 +18,8 @@ from langchain.docstore.document import Document
 import numpy as np
 from utils import torch_gc
 from tqdm import tqdm
+# PyPinyin库是一个支持中文转拼音输出的Python第三方库，
+# 它可以根据词组智能匹配最正确的拼音，并且支持多音字，简单的繁体, 注音，多种不同拼音/注音风格的转换。
 from pypinyin import lazy_pinyin
 from loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from models.base import (BaseAnswer,
@@ -17,7 +28,7 @@ from models.loader.args import parser
 from models.loader import LoaderCheckPoint
 import models.shared as shared
 from agent import bing_search
-from langchain.docstore.document import Document
+
 from functools import lru_cache
 
 
@@ -59,6 +70,9 @@ def tree(filepath, ignore_dir_names=None, ignore_file_names=None):
 
 
 def load_file(filepath, sentence_size=SENTENCE_SIZE):
+    """
+    根据文件类型加载并分割文档
+    """
     if filepath.lower().endswith(".md"):
         loader = UnstructuredFileLoader(filepath, mode="elements")
         docs = loader.load()
@@ -66,7 +80,10 @@ def load_file(filepath, sentence_size=SENTENCE_SIZE):
         loader = TextLoader(filepath, autodetect_encoding=True)
         textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
         docs = loader.load_and_split(textsplitter)
+    # #? langchain的unstructured.partition定义了常见文件格式的loader类，为什么还要用Paddle重写
+    # langchain的partition方法调用的是pytesseract来进行image和pdf解析
     elif filepath.lower().endswith(".pdf"):
+        # 可能返回OSError: [Errno 101] Network is unreachable
         loader = UnstructuredPaddlePDFLoader(filepath)
         textsplitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
         docs = loader.load_and_split(textsplitter)
@@ -177,6 +194,9 @@ def similarity_search_with_score_by_vector(
 
 
 def search_result2docs(search_results):
+    """
+    将bing搜索返回的结果封装为Document类实例
+    """
     docs = []
     for result in search_results:
         doc = Document(page_content=result["snippet"] if "snippet" in result.keys() else "",
@@ -209,6 +229,13 @@ class LocalDocQA:
                                     filepath: str or List[str],
                                     vs_path: str or os.PathLike = None,
                                     sentence_size=SENTENCE_SIZE):
+        """
+        根据文档初始化知识库；
+        1. 根据文件地址或地址列表，调用load_file函数，load_file调用UnstructuredFileLoader和/或ChineseTextSplitter对文件进行载入和分割
+            返回一个docs的列表
+        2. load_vector_store函数和嵌入模型作为知识库的vector_store实例，调用add_document方法将所有docs内的文本转换为向量
+        3. 保存向量到本地的vector_store下vs_path的向量数据库内；
+        """
         loaded_files = []
         failed_files = []
         if isinstance(filepath, str):
@@ -218,6 +245,7 @@ class LocalDocQA:
             elif os.path.isfile(filepath):
                 file = os.path.split(filepath)[-1]
                 try:
+                    # 可能返回OSError: [Errno 101] Network is unreachable
                     docs = load_file(filepath, sentence_size)
                     logger.info(f"{file} 已成功加载")
                     loaded_files.append(filepath)
@@ -253,6 +281,7 @@ class LocalDocQA:
         if len(docs) > 0:
             logger.info("文件加载完毕，正在生成向量库")
             if vs_path and os.path.isdir(vs_path) and "index.faiss" in os.listdir(vs_path):
+                # 
                 vector_store = load_vector_store(vs_path, self.embeddings)
                 vector_store.add_documents(docs)
                 torch_gc()
@@ -270,6 +299,14 @@ class LocalDocQA:
             return None, loaded_files
 
     def one_knowledge_add(self, vs_path, one_title, one_conent, one_content_segmentation, sentence_size):
+        """
+        向知识库增加一条文本知识
+        vs_path: 知识库路径；
+        one_title: 文本源
+        one_conent: 文本内容
+        one_content_segmentation: 类似于ChineseTextSplitter文本分割器实例
+        sentence_size: 分割时，句子的长度
+        """
         try:
             if not vs_path or not one_title or not one_conent:
                 logger.info("知识库添加错误，请确认知识库名字、标题、内容是否正确！")
@@ -291,6 +328,13 @@ class LocalDocQA:
             return None, [one_title]
 
     def get_knowledge_based_answer(self, query, vs_path, chat_history=[], streaming: bool = STREAMING):
+        """
+        基于知识的向量数据库返回答案
+        1. 加载向量数据库；
+        2. 根据query,和top_k关键字，找到相关的文档，调用torch的垃圾回收机制清理缓存；
+        3. 根据文档和query,生成prompt；
+        4. 根据prompt，调用llm.generateAnswer方法生成问题的答案
+        """
         vector_store = load_vector_store(vs_path, self.embeddings)
         FAISS.similarity_search_with_score_by_vector = similarity_search_with_score_by_vector
         vector_store.chunk_size = self.chunk_size
@@ -336,6 +380,13 @@ class LocalDocQA:
         return response, prompt
 
     def get_search_result_based_answer(self, query, chat_history=[], streaming: bool = STREAMING):
+        """
+        基于搜索进行问答。
+        1. 直接调用BingSearchAPIWrapper搜索问题，返回result_len个结果；
+        2. 调用langchain.docstore.document.Document将返回的结果包装为Document实例；
+        3. 将包装后的搜索结果与问题一起组装为prompt；
+        4. 调用LLM生成答案，返回的source即搜索的结果；
+        """
         results = bing_search(query)
         result_docs = search_result2docs(results)
         prompt = generate_prompt(result_docs, query)
@@ -357,6 +408,7 @@ if __name__ == "__main__":
     args = parser.parse_args(args=['--model-dir', '/media/checkpoint/', '--model', 'chatglm-6b', '--no-remote-model'])
 
     args_dict = vars(args)
+    # 加载模型权重
     shared.loaderCheckPoint = LoaderCheckPoint(args_dict)
     llm_model_ins = shared.loaderLLM()
     llm_model_ins.set_history_len(LLM_HISTORY_LEN)
