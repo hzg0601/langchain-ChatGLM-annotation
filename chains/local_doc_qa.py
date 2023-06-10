@@ -84,6 +84,8 @@ def load_file(filepath, sentence_size=SENTENCE_SIZE):
     # langchain的partition方法调用的是pytesseract来进行image和pdf解析
     elif filepath.lower().endswith(".pdf"):
         # 可能返回OSError: [Errno 101] Network is unreachable
+        # 需要手动下载https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_det_infer.tar
+        # 然后上传到.paddleocr/whl/det/ch/ch_PP-OCRv3_det_infer/ch_PP-OCRv3_det_infer.tar
         loader = UnstructuredPaddlePDFLoader(filepath)
         textsplitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
         docs = loader.load_and_split(textsplitter)

@@ -18,6 +18,8 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
             full_dir_path = os.path.join(os.path.dirname(filepath), dir_path)
             if not os.path.exists(full_dir_path):
                 os.makedirs(full_dir_path)
+            # 某些情况下，在linux系统上调用PaddleOCR会抛出OSError[Errno 101] Network is not reachable
+            # 这种情况下需要修改
             ocr = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, show_log=False)
             doc = fitz.open(filepath)
             txt_file_path = os.path.join(full_dir_path, f"{os.path.split(filepath)[-1]}.txt")
