@@ -156,7 +156,6 @@ Q12 启动api.py时upload_file接口抛出 `partially initialized module 'charse
 
 Q13 启动api.py时upload_file接口，上传PDF或图片时，抛出OSError: [Errno 101] Network is unreachable
 
-
 某些情况下,linux系统上的ip在请求下载ch_PP-OCRv3_rec_infer.tar等文件时，可能会抛出OSError: [Errno 101] Network is unreachable，此时需要首先修改anaconda3/envs/[虚拟环境名]/lib/[python版本]/site-packages/paddleocr/ppocr/utils/network.py脚本，将57行的：
 
 ```

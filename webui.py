@@ -87,7 +87,7 @@ def get_answer(query, vs_path, history, mode, score_threshold=VECTOR_SEARCH_SCOR
             yield history + [[query,
                               "请选择知识库后进行测试，当前未选择知识库。"]], ""
     else:
-        for answer_result in local_doc_qa.llm.generatorAnswer(prompt=query, history=history[:-1],
+        for answer_result in local_doc_qa.llm.generatorAnswer(prompt=query, history=history,
                                                               streaming=streaming):
             resp = answer_result.llm_output["answer"]
             history = answer_result.history
@@ -326,7 +326,7 @@ with gr.Blocks(css=block_css, theme=gr.themes.Default(**default_theme_args)) as 
                                                   interactive=True, visible=True)
                         with gr.Tab("上传文件"):
                             files = gr.File(label="添加文件",
-                                            file_types=['.txt', '.md', '.docx', '.pdf', '.png', '.jpg'],
+                                            file_types=['.txt', '.md', '.docx', '.pdf', '.png', '.jpg', ".csv"],
                                             file_count="multiple",
                                             show_label=False)
                             load_file_button = gr.Button("上传文件并加载知识库")

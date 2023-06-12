@@ -34,6 +34,7 @@ class ChatGLM(BaseAnswer, LLM, ABC):
         self.history_len = history_len
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        print(f"__call:{prompt}")
         response, _ = self.checkPoint.model.chat(
             self.checkPoint.tokenizer,
             prompt,
@@ -41,6 +42,8 @@ class ChatGLM(BaseAnswer, LLM, ABC):
             max_length=self.max_token,
             temperature=self.temperature
         )
+        print(f"response:{response}")
+        print(f"+++++++++++++++++++++++++++++++++++")
         return response
 
     def generatorAnswer(self, prompt: str,
@@ -52,7 +55,7 @@ class ChatGLM(BaseAnswer, LLM, ABC):
             for inum, (stream_resp, _) in enumerate(self.checkPoint.model.stream_chat(
                     self.checkPoint.tokenizer,
                     prompt,
-                    history=history[-self.history_len:-1] if self.history_len > 0 else [],
+                    history=history[-self.history_len:-1] if self.history_len > 1 else [],
                     max_length=self.max_token,
                     temperature=self.temperature
             )):
