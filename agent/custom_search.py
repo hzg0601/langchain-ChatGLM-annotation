@@ -1,3 +1,7 @@
+"""
+使用bing-web-search1.p.rapidapi.com/search作为搜索引擎
+对给定的问题进行搜索，将返回答案的前6个拼接起来返回
+"""
 import requests
 
 RapidAPIKey = "90bbe925ebmsh1c015166fc5e12cp14c503jsn6cca55551ae4"
@@ -40,7 +44,7 @@ class DeepSearch:
                 description = item["description"]
                 item_str = f"{title}: {description}"
                 result_arr = result_arr + [item_str]
-
+            # 将搜索到的前6个答案拼接起来返回
             result_str = "\n".join(result_arr)
             return result_str
 

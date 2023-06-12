@@ -1,5 +1,7 @@
 
 from langchain.agents import Tool
+# The BaseTool automatically infers the schema from the _run method’s signature.
+# 自定义CustomTool时，仅需def _run 和 async def _arun即可
 from langchain.tools import BaseTool
 from langchain import PromptTemplate, LLMChain
 from agent.custom_search import DeepSearch
@@ -20,7 +22,12 @@ agent_template = """
 {answer_format}
 """
 
+# String prompt should expose the format method, returning a prompt
 class CustomPromptTemplate(StringPromptTemplate):
+    """自定义prompt模板，
+    如果format函数的输入参数中intermediate_steps为空，则表明没有联网查询信息，background_information为空，直接进行回答
+    如果根据 intermediate_steps 中的 AgentAction 拼装 background_infomation，拼接background_information进行回答。
+    """
     template: str
     tools: List[Tool]
 
@@ -28,7 +35,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         intermediate_steps = kwargs.pop("intermediate_steps")
         # 没有互联网查询信息
         if len(intermediate_steps) == 0:
-            background_infomation = "\n"
+            background_information = "\n"
             role = "傻瓜机器人"
             question_guide = "我现在有一个问题"
             answer_format = "如果你知道答案，请直接给出你的回答！如果你不知道答案，请你只回答\"DeepSearch('搜索词')\"，并将'搜索词'替换为你认为需要搜索的关键词，除此之外不要回答其他任何内容。\n\n下面请回答我上面提出的问题！"
