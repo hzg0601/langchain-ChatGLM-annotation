@@ -1,4 +1,5 @@
 import os
+# 一个在线向量数据库
 import pinecone 
 from tqdm import tqdm
 from langchain.llms import OpenAI
