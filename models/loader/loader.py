@@ -222,8 +222,16 @@ class LoaderCheckPoint:
 
             print(
                 "Warning: self.llm_device is False.\nThis means that no use GPU  bring to be load CPU mode\n")
-            params = {"low_cpu_mem_usage": True, "torch_dtype": torch.float32, "trust_remote_code": True}
-            model = LoaderClass.from_pretrained(checkpoint, **params).to(self.llm_device, dtype=float)
+            try:
+                params = {"low_cpu_mem_usage": True, "torch_dtype": torch.float32, "trust_remote_code": True}
+                model = LoaderClass.from_pretrained(checkpoint, **params).to(self.llm_device, dtype=float)
+            except RuntimeError as e:
+                print(e)
+                params = {"low_cpu_mem_usage": False, "torch_dtype": torch.float32, "trust_remote_code": True}
+                model = LoaderClass.from_pretrained(checkpoint, **params).to(self.llm_device, dtype=float)
+            except Exception as e:
+                print(e)
+
 
         # Loading the tokenizer
         if type(model) is transformers.LlamaForCausalLM:

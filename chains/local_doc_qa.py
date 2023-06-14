@@ -8,7 +8,7 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 # 我们的应用性能指标也会存在非常大的差异，如何选择合适的索引，也是一门学问。
 # 除了支持丰富的索引类型之外，faiss 还能够运行在 CPU 和 GPU 两种环境中，同时可以使用 C++ 或者 Python 进行调用，
 # 也有开发者做了 Go-Faiss ，来满足 Golang 场景下的 faiss 使用。
-from langchain.vectorstores import FAISS
+from vectorstores import MyFAISS
 from langchain.document_loaders import UnstructuredFileLoader, TextLoader
 from configs.model_config import *
 import datetime

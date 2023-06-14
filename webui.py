@@ -576,7 +576,7 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
 # app_kwargs: 作为参数键和参数值的字典传递给底层 FastAPI 应用程序的附加关键字参数。例如，`{"docs_url": "/docs"}`
 (demo
  .queue(concurrency_count=3)
- .launch(server_name='0.0.0.0',
+ .launch(server_name='10.20.33.13',
          server_port=7860,
          show_api=True,
          share=True,
