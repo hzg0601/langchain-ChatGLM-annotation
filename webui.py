@@ -30,13 +30,15 @@ embedding_model_dict_list = list(embedding_model_dict.keys())
 llm_model_dict_list = list(llm_model_dict.keys())
 
 local_doc_qa = LocalDocQA()
-
+# Each flagged sample (both the input and output data) is logged to a CSV file with headers on the machine running the gradio app
+# 将flagged样例，包括输入和输出写入CSV的logger
 flag_csv_logger = gr.CSVLogger()
 
 
 def get_answer(query, vs_path, history, mode, score_threshold=VECTOR_SEARCH_SCORE_THRESHOLD,
                vector_search_top_k=VECTOR_SEARCH_TOP_K, chunk_conent: bool = True,
                chunk_size=CHUNK_SIZE, streaming: bool = STREAMING):
+    """问答的后台函数"""
     if mode == "Bing搜索问答":
         for resp, history in local_doc_qa.get_search_result_based_answer(
                 query=query, chat_history=history, streaming=streaming):
@@ -98,6 +100,7 @@ def get_answer(query, vs_path, history, mode, score_threshold=VECTOR_SEARCH_SCOR
 
 
 def init_model():
+    """初始化模型的函数"""
     args = parser.parse_args()
 
     args_dict = vars(args)
@@ -125,6 +128,7 @@ def init_model():
 
 def reinit_model(llm_model, embedding_model, llm_history_len, no_remote_model, use_ptuning_v2, use_lora, top_k,
                  history):
+    """重新初始化模型"""
     try:
         llm_model_ins = shared.loaderLLM(llm_model, no_remote_model, use_ptuning_v2)
         llm_model_ins.history_len = llm_history_len
@@ -140,7 +144,12 @@ def reinit_model(llm_model, embedding_model, llm_history_len, no_remote_model, u
     return history + [[None, model_status]]
 
 
-def get_vector_store(vs_id, files, sentence_size, history, one_conent, one_content_segmentation):
+def get_vector_store(vs_id, files, sentence_size, history, one_content, one_content_segmentation):
+    """
+    1. 如果files是文件列表，将源地址的所有文件复制到UPLOAD_ROOT_PATH/vs_id下，并调用init_knowledge_vector_store初始化知识库
+    2. 如果files不是列表，则直接调用one_knowledge_add将给定的内容添加到知识库
+
+    """
     vs_path = os.path.join(VS_ROOT_PATH, vs_id)
     filelist = []
     if local_doc_qa.llm and local_doc_qa.embeddings:
@@ -151,7 +160,7 @@ def get_vector_store(vs_id, files, sentence_size, history, one_conent, one_conte
                 filelist.append(os.path.join(UPLOAD_ROOT_PATH, vs_id, filename))
             vs_path, loaded_files = local_doc_qa.init_knowledge_vector_store(filelist, vs_path, sentence_size)
         else:
-            vs_path, loaded_files = local_doc_qa.one_knowledge_add(vs_path, files, one_conent, one_content_segmentation,
+            vs_path, loaded_files = local_doc_qa.one_knowledge_add(vs_path, files, one_content, one_content_segmentation,
                                                                    sentence_size)
         if len(loaded_files):
             file_status = f"已添加 {'、'.join([os.path.split(i)[-1] for i in loaded_files if i])} 内容至知识库，并已加载知识库，请开始提问"
@@ -166,6 +175,7 @@ def get_vector_store(vs_id, files, sentence_size, history, one_conent, one_conte
 
 def change_vs_name_input(vs_id, history):
     if vs_id == "新建知识库":
+        # gr.update 更新组件属性
         return gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), None, history
     else:
         vs_path = os.path.join(VS_ROOT_PATH, vs_id)
@@ -282,8 +292,15 @@ default_theme_args = dict(
     font=["Source Sans Pro", 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 )
+# gr.Blocks(theme:Theme | str | None =None,analytics_enabled: bool | None =None,mode:str='blocks',title:str="Gradio",css:str|None=None)
+# theme, 可以是内建的“soft","default","monochrome","glass"；gr.themes下的Theme类；或者HF HUB里的主题，如"gradio/monochrome"，monochrome单色
+# analytics_enabled，是否允许搜集信息
+# mode 当前Blocks的别名，默认为blocks
+# title,在浏览器窗口中打开时显示的选项卡标题
+# 应用于当前Blocks的自定义 css 或自定义 css 文件的路径
 
-with gr.Blocks(css=block_css, theme=gr.themes.Default(**default_theme_args)) as demo:
+with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title="chatglm-6b-webui-hzg") as demo:
+    # 特殊的隐藏组件，用于存储同一用户运行演示时的会话状态。当用户刷新页面时，State 变量的值被清除。
     vs_path, file_status, model_status = gr.State(
         os.path.join(VS_ROOT_PATH, get_vs_list()[0]) if len(get_vs_list()) > 1 else ""), gr.State(""), gr.State(
         model_status)
@@ -490,6 +507,31 @@ with gr.Blocks(css=block_css, theme=gr.themes.Default(**default_theme_args)) as 
         load_knowlege_button = gr.Button("重新构建知识库")
         load_knowlege_button.click(reinit_vector_store, show_progress=True,
                                    inputs=[select_vs, chatbot], outputs=chatbot)
+    # load()
+    # 出于兼容性考虑，.load即是一种类方法也是一种实例方法，但类方法和实例方法的实现不同
+    # 类方法，用于从HF Space repo中加载demo，并创建一个block实例并返回
+
+    # 实例方法，用于展示浏览器中加载demo后立即运行的事件
+    # fn: 包装接口的函数，通常是机器学习模型的预测函数，如果函数有输入参数，在input里指定
+    #   应返回单个值或一个元组，每个值对应输出的一个分量，即refresh_vs_list的值会在outputs
+    #   定义的组件中显示。
+    # inputs: fn的输入，默认为None
+    # outputs: fn的返回值，默认为None
+    # api_name: 如不为None, 将api文档中对外暴露端点
+    # scroll_to_output: 如果为真，将在完成时滚动到输出组件
+    # show_progress: 如果为真，将在挂起时显示进度动画
+    # queue: 如果为 True，将把请求放在队列中;
+    # batch: 如果为真，则该函数应该处理一批输入，这意味着它应该接受每个参数的输入值列表。 列表的长度应该相等（并且最大长度为“max_batch_size”）。
+    #       然后该函数*需要*返回一个列表元组（即使只有 1 个输出组件），元组中的每个列表对应一个输出组件。
+    # max_batch_size: int=4,如果从队列中调用，则要一起批处理的最大输入数（仅当 batch=True 时相关）
+    # preprocess: 如果为 False，则在运行“fn”之前不会对组件数据进行预处理（例如，如果使用“Image”组件调用此方法，则将其保留为 base64 字符串）。
+    # postprocess: 如果为 False，则在将“fn”输出返回给浏览器之前不会运行组件数据的后处理。
+    # every: 指定多少秒运行一次事件，必须启用队列。
+    # name:  the name of the model (e.g. "gpt2" or "facebook/bart-base") or space (e.g. "flax-community/spanish-gpt2"), 
+    #        can include the `src` as prefix (e.g. "models/facebook/bart-base")
+    # src:  模型的来源：`models` 或 `spaces`（如果在 `name` 中作为前缀提供来源，则留空）
+    # api_key:  optional access token for loading private Hugging Face Hub models or spaces.
+    # alias: 模型的别名
     demo.load(
         fn=refresh_vs_list,
         inputs=None,
@@ -498,10 +540,39 @@ with gr.Blocks(css=block_css, theme=gr.themes.Default(**default_theme_args)) as 
         show_progress=False,
     )
 
+# queue(concurrency_count,status_update_rate,api_open,max_size)
+# 通过创建队列来控制处理请求的速率。这将允许您设置一次要处理的请求数，并让用户知道他们在队列中的位置。
+# concurrency_count,将同时处理来自队列的请求的工作线程数。增加这个数字会增加处理请求的速度，但也会增加队列的内存使用量。
+# status_update_rate,如果为“auto”，Queue 将在作业完成时向所有客户端发送状态估计。否则，Queue 将定期发送此参数设置为秒数的状态。
+# api_open,如果为 True，后端的 REST 路由将打开，允许直接向这些端点发出的请求跳过队列。
+# max_size,队列在任何给定时刻存储的最大事件数。如果队列已满，则不会添加新事件，并且用户会收到一条消息，说明队列已满。如果没有，队列大小将是无限的。
+
+#launch(inline,inbrowser,share,debug,max_threads,auth,auth_message,
+# prevent_thread_lock,show_error,sever_name,server_port,show_tips,height,width,
+# favicon_path,ssl_keyfile,ssl_certfile,ssl_keyfile_password,ssl_verify,quiet,show_api,
+# allowed_paths,blocked_paths,root_paths,app_kwargs) 
+# 启动一个web服务器
+# inline:bool|None=None,是否在 iframe 中内联显示在界面中。在 python 笔记本中默认为 True；否则为假。
+# inbrowser: bool=False,是否在默认浏览器的新选项卡中自动启动界面。
+# share: 是否为界面创建可公开共享的链接。 创建一个 SSH 隧道，使您的 UI 可以从任何地方访问。 
+#        如果未提供，则每次默认设置为 False，但在 Google Colab 中运行时除外。 当本地主机不可访问时（例如 Google Colab），不支持设置 share=False。
+# debug: 如果为True，则阻塞主线程运行。
+# max_threads: int=40, Gradio 应用程序可以并行生成的最大总线程数。 
+#               默认继承自 starlette 库（当前为 40）。 无论队列是否启用都适用。 
+#               但如果启用排队，则此参数将增加到至少为队列的 concurrency_count。
+# auth: 如果提供，访问界面所需的用户名和密码（或用户名-密码元组列表）。还可以提供接受用户名和密码并在有效登录时返回 True 的功能。
+# auth_message:str,如果提供，则在登录页面上提供 HTML 消息
+# prevent_thread_lock: 如果为 True，该接口将在服务器运行时阻塞主线程。
+# server_name: 
 (demo
  .queue(concurrency_count=3)
- .launch(server_name='0.0.0.0',
+ .launch(server_name='10.20.33.13',
          server_port=7860,
          show_api=False,
-         share=False,
+         share=True,
          inbrowser=False))
+
+# .integrate(comet_ml,wandb,mlflow),一种与其他库集成的万能方法。此方法应在 launch() 之后运行
+# comet_ml,如果提供了 comet_ml Experiment 对象，将与实验集成并出现在 Comet 仪表板上
+# wandb,如果提供了 wandb 模块，将与其集成并出现在 WandB 仪表板上
+# mlflow,如果提供了 mlflow 模块，将与实验集成并出现在 ML Flow 仪表板上
