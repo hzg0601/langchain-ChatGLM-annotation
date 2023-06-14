@@ -563,12 +563,22 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
 # auth: 如果提供，访问界面所需的用户名和密码（或用户名-密码元组列表）。还可以提供接受用户名和密码并在有效登录时返回 True 的功能。
 # auth_message:str,如果提供，则在登录页面上提供 HTML 消息
 # prevent_thread_lock: 如果为 True，该接口将在服务器运行时阻塞主线程。
-# server_name: 
+# show_tips: if True, will occasionally show tips about new Gradio features
+# favicon_path: 图标的路径
+# quiet: If True, suppresses most print statements.
+# show_api: 如果为真，则在应用程序的页脚中显示 api 文档。默认为真。如果启用队列，则 .queue() 的 api_open 参数将确定是否显示 api 文档，与 show_api 的值无关。
+# allowed_path: list|None=None 允许 gradio 服务的完整文件路径或父目录的列表（除了包含 gradio python 文件的目录）。
+#               必须是绝对路径。 警告：如果您提供目录，则您应用的所有用户都可以访问这些目录或其子目录中的任何文件。
+# blocked_paths: 不允许 gradio 服务的完整文件路径或父目录列表（即不允许您的应用程序的用户访问）。 必须是绝对路径。 
+#               警告：默认情况下优先于 `allowed_paths` 和 Gradio 公开的所有其他目录。
+# root_paths: 应用程序的根路径（或“挂载点”），如果它不是从域的根（“/”）提供的。 通常在应用程序位于将请求转发给应用程序的反向代理后面时使用。 
+#               例如，如果应用程序在“https://example.com/myapp”提供服务，则“root_path”应设置为“/myapp”。
+# app_kwargs: 作为参数键和参数值的字典传递给底层 FastAPI 应用程序的附加关键字参数。例如，`{"docs_url": "/docs"}`
 (demo
  .queue(concurrency_count=3)
- .launch(server_name='10.20.33.13',
+ .launch(server_name='0.0.0.0',
          server_port=7860,
-         show_api=False,
+         show_api=True,
          share=True,
          inbrowser=False))
 
