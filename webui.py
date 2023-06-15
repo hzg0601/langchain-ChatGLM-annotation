@@ -338,29 +338,122 @@ default_theme_args = dict(
 
 with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title="chatglm-6b-webui-hzg") as demo:
     # 特殊的隐藏组件，用于存储同一用户运行演示时的会话状态。当用户刷新页面时，State 变量的值被清除。
-    vs_path, file_status, model_status = gr.State(
-        os.path.join(KB_ROOT_PATH, get_vs_list()[0], "vector_store") if len(get_vs_list()) > 1 else ""), gr.State(""), gr.State(
-        model_status)
+    # 变量经过gr.State修饰后，相当于C的static变量，如num = gr.State(value=0)相当于 num = static 0
+    # 在每次被调用后，如果值被修改，则保存被修改后的值
+    vs_path = gr.State(os.path.join(KB_ROOT_PATH, get_vs_list()[0], "vector_store") if len(get_vs_list()) > 1 else "")
+    file_status, model_status =  gr.State(""), gr.State(model_status)
+    # gr.Markdown(value:str|Callable="",visible:bool=True,elem_id:str|None=None,elem_classes:list[str]|str|None=None)
+    # elem_id: 一个可选字符串，在 HTML DOM 中指定为该组件的 ID。 可用于定位 CSS 样式。
+    # elem_classes: 一个可选字符串，在 HTML DOM 中指定为该组件的类。 可用于定位 CSS 样式。
+    # Used to render arbitrary Markdown output. Can also render latex enclosed by dollar signs.
+
+    # 主要方法为change，当组件的值由于用户输入（例如，用户在文本框中键入）
+    # 或由于函数更新（例如，图像从事件触发器的输出中接收值）而发生变化时，将触发此侦听器。 
+    # 有关仅由用户输入触发的侦听器，请参见 .input() 。 当此组件位于Gradio Blocks中时，可以使用此方法。
     gr.Markdown(webui_title)
+
+    # Tab或TabItem是一种layout元素，当选中该tab时，在Tab中定义的元素变成可见。
+    # 包含了select方法，当用户从组件中进行选择时，将触发此侦听器。 
+    # 此事件具有 gradio.SelectData 类型的 EventData，它携带信息，可通过 SelectData.index 和 SelectData.value 访问。
+    #  有关如何使用此事件数据的信息，请参阅 EventData 文档。
+
     with gr.Tab("对话"):
+        # gr.Row(variant="default",visible=True,elem_id=None) 是 Blocks 中的布局元素，可水平呈现所有子项。
+        # variant:str, 'default'没有背景，'panel'灰色背景圆角，'compact'圆角且没有间隙
         with gr.Row():
+            # gr.Column(scale=1,min_width=320,variant="default",visible=True,elem_id=None)
+            # 是 Blocks 中的布局元素，可垂直呈现所有子项。
+            # scale:与相邻列相比的相对宽度
             with gr.Column(scale=10):
+                # 显示聊天机器人输出，显示用户提交的消息和响应。支持 Markdown 的子集，包括粗体、斜体、代码和图像。
+                # Chatbot(value,color_map,label,every,show_label,visible,elem_id,elem_classes)
+                # value:list[list[str | tuple[str] | tuple[str, str] | None]] | Callable | None,
+                #       ------------每个list[str|tuple[str]]，都会开启一个box-----------------
+                # label: box的label,可以和show_label配合，show_label默认为True
+                # every: 如果“value”是可调用的，则在客户端连接打开时每“every”秒运行一次函数。
+                #           必须启用队列。可以通过该组件的 .load_event 属性访问该事件（例如取消它）。
+
                 chatbot = gr.Chatbot([[None, init_message], [None, model_status.value]],
                                      elem_id="chat-box",
                                      show_label=False).style(height=750)
+                
+                # Textbox(value="",lines=1, max_lines=20,placeholder=None,label=None,
+                #       info=None,every=None,show_label=True,interactive=None,
+                #       elem_id=None,elem_classes=None,type="text")
+                # 创建一个文本区域供用户输入字符串或显示字符串输出。
+                # value: str|Callable|None,默认提供的文本，如果可调用，该函数将在应用程序加载时调用以设置组件的初始值。
+                # lines,max_lines是允许的最小和最大行数
+                # placeholder: 在文本区域后面提供的占位符提示。
+                # interactive: bool|None, 如果为真，将呈现为可编辑的文本框；
+                #               如果为 False，将禁用编辑。如果未提供，则根据组件是用作输入还是输出来推断。
+                # type: The type of textbox. One of: 'text', 'password', 'email', Default is 'text'.
+                # 方法包括style,change,input,submit
+                # 
+
+                # submit(fn,inputs,outputs,api_name,status_tracker,scroll_to_output,show_progress="full",
+                #       queue,batch=False,max_batch_size=4,preprocess=True,postprocess=True,cancels=None,
+                #       every)
+                #  当输入Enter键后，执行fn函数，输入为input,返回值作用于outputs
+                # show_progress: "full", "minimal","hidden"
+                # batch: 如果为真，则该函数应该处理一批输入，这意味着它应该接受每个参数的输入值列表。
+
+                # change,参数同submit,当组件的值由于用户输入（例如，用户在文本框中键入）
+                #       或由于函数更新（例如，图像从事件触发器的输出中接收值）而发生变化时，将触发此侦听器。
+
+                # input,参数同submit,当用户更改组件的值时触发此侦听器
+
                 query = gr.Textbox(show_label=False,
                                    placeholder="请输入提问内容，按回车进行提交").style(container=False)
+            
             with gr.Column(scale=5):
+                # Radio(choice=None,value=None,type="value",label=None,info=None,every=None,show_label=None,
+                #       interactive=None,visible=True,elem_id=None,elem_classes=None)
+                # 创建一组单选按钮，其中只能选择一个。
+                # choice:list[str]|None
+                # value: str|Callable|None, 默认选项
+                # type: 组件要返回的值的类型。 “value”返回所选选项的字符串，“index”返回所选选项的索引。
+
+                # 包含如下方法
+                # style : This method can be used to change the appearance of the radio component.
+                # change: Radio的监听器，
                 mode = gr.Radio(["LLM 对话", "知识库问答", "Bing搜索问答"],
                                 label="请选择使用模式",
                                 value="知识库问答", )
+                # Accordion(label,open=True,visible,elem_id)
+                # label: accordion的名称
+                # open: bool=True,默认是否打开
+                # (手风琴)是一种布局元素，可以切换以显示/隐藏包含的内容。
                 knowledge_set = gr.Accordion("知识库设定", visible=False)
                 vs_setting = gr.Accordion("配置知识库")
+                # Radio的监听器，即调用fn=change_mode函数，函数的输入为inputs
+                # outputs是fn的输出作用的对象
+                # 函数的输出是一组gradio.components,如gr.update,这些gradio.components会分别应用到outputs上
+                # 例如选中知识库问答后，vs_setting变为可见，knowledge_set变为不可见，chatbot没有作用对象故不变
                 mode.change(fn=change_mode,
                             inputs=[mode, chatbot],
                             outputs=[vs_setting, knowledge_set, chatbot])
+                # 此时相当于with gr.Accordion("配置知识库"，visible=True)
                 with vs_setting:
+                    # gr.Button(value="Run",variant="secondary",visible=True,
+                    # interactive=True,elem_id=None,elem_classes=None)
+                    # 用于创建一个按钮，可以分配任意的 click() 事件。按钮的标签（值）可以用作输入或通过函数的输出设置。
+                    # value: 默认显示文字
+                    # variant: ['primary', 'secondary', 'stop'], "primary"为行为号召风格，"secondary"：柔和风格，
+                    #           "stop"即stop按钮
+
+                    # 存在style和click两个方法
                     vs_refresh = gr.Button("更新已有知识库选项")
+
+                    # gr.Dropdown(choices=None,value=None,type="value",multiselect=None,max_choices=None,label=None,
+                    #               info=None,every=None,show_label=True,interactive=None,visible=True,elem_id=None,
+                    #             allow_custom_value=False)
+                    # 创建可选的下拉选项
+                    # choice: 给定的选项
+                    # value: 默认选项
+                    # type: 返回的类型，"value"为str,"index"为id
+                    # allow_costom_value: 是否允许用户自定义选项
+
+                    # 存在style和change两个方法
                     select_vs = gr.Dropdown(get_vs_list(),
                                             label="请选择要加载的知识库",
                                             interactive=True,
@@ -372,10 +465,16 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
                                          visible=True)
                     vs_add = gr.Button(value="添加至知识库选项", visible=True)
                     vs_delete = gr.Button("删除本知识库", visible=False)
+
                     file2vs = gr.Column(visible=False)
+                    # 相当于with gr.Column(visible=False)
                     with file2vs:
                         # load_vs = gr.Button("加载知识库")
                         gr.Markdown("向知识库中添加文件")
+                        # gr.Number(value=None,label=None,info=None,every=None,show_label=None,interactive=None,
+                        #           visible=True,elem_id=None,elem_classes=None,precision=None)
+                        # 创建一个数字字段供用户输入数字作为输入或显示数字输出。
+                        # 
                         sentence_size = gr.Number(value=SENTENCE_SIZE, precision=0,
                                                   label="文本入库分句长度限制",
                                                   interactive=True, visible=True)
@@ -395,18 +494,22 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
                                                              label="请从知识库已有文件中选择要删除的文件",
                                                              interactive=True)
                             delete_file_button = gr.Button("从知识库中删除选中文件")
+                    # Button("更新知识库选项"),更新vs
                     vs_refresh.click(fn=refresh_vs_list,
                                      inputs=[],
                                      outputs=select_vs)
+                    # Button(value="添加至知识库选项")
                     vs_add.click(fn=add_vs_name,
                                  inputs=[vs_name, chatbot],
                                  outputs=[select_vs, vs_name, vs_add, file2vs, chatbot, vs_delete])
                     vs_delete.click(fn=delete_vs,
                                     inputs=[select_vs, chatbot],
                                     outputs=[select_vs, vs_name, vs_add, file2vs, chatbot, vs_delete])
+                    # gr.Dropdown(get_vs_list(),label="请选择要加载的知识库")
                     select_vs.change(fn=change_vs_name_input,
                                      inputs=[select_vs, chatbot],
                                      outputs=[vs_name, vs_add, file2vs, vs_path, chatbot, files_to_delete, vs_delete])
+                    # gr.Button("上传文件并加载知识库"),调用函数，返回gradio.components
                     load_file_button.click(get_vector_store,
                                            show_progress=True,
                                            inputs=[select_vs, files, sentence_size, chatbot, vs_add, vs_add],
@@ -416,7 +519,9 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
                                              inputs=[select_vs, folder_files, sentence_size, chatbot, vs_add,
                                                      vs_add],
                                              outputs=[vs_path, folder_files, chatbot, files_to_delete], )
+                    # 将指定内容标记为"flagged"，写入日志
                     flag_csv_logger.setup([query, vs_path, chatbot, mode], "flagged")
+                    # gr.Textbox(show_label=False,placeholder="请输入提问内容，按回车进行提交")
                     query.submit(get_answer,
                                  [query, vs_path, chatbot, mode],
                                  [chatbot, query])
@@ -529,15 +634,22 @@ with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title=
                              label="LLM 模型",
                              value=LLM_MODEL,
                              interactive=True)
+        # gr.Checkbox(value,label,info,every,show_label=True,interactive,visible,elem_classes,elem_id)
+        # 创建一个可以设置为“True”或“False”的复选框。
+        # 包括 style,change,input,select等方法
+        # 类似的组件还是CheckboxGroup
         no_remote_model = gr.Checkbox(shared.LoaderCheckPoint.no_remote_model,
                                       label="加载本地模型",
                                       interactive=True)
-
+        # Slide(minimum=0,maximum=100,step=None,value=None,label=None,info=None,...,randomize=False)
+        # randomize: 如果为 True，则应用程序加载时滑块的值是从最小值和最大值给定的范围内均匀随机取的。
+        # 创建一个滑块，范围从“最小值”到“最大值”，步长为“step”。
         llm_history_len = gr.Slider(0, 10,
                                     value=LLM_HISTORY_LEN,
                                     step=1,
                                     label="LLM 对话轮数",
                                     interactive=True)
+        
         use_ptuning_v2 = gr.Checkbox(USE_PTUNING_V2,
                                      label="使用p-tuning-v2微调过的模型",
                                      interactive=True)
