@@ -81,6 +81,7 @@ class FastChatOpenAILLM(RemoteRpcModel, LLM, ABC):
                 "Please install it with `pip install openai`."
             )
         # create a chat completion
+        #* 主方法，即调用openai.ChatCompletion.create
         completion = openai.ChatCompletion.create(
             model=self.model_name,
             messages=self.build_message_list(prompt)
