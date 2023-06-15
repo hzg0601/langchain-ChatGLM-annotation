@@ -9,7 +9,7 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 # 除了支持丰富的索引类型之外，faiss 还能够运行在 CPU 和 GPU 两种环境中，同时可以使用 C++ 或者 Python 进行调用，
 # 也有开发者做了 Go-Faiss ，来满足 Golang 场景下的 faiss 使用。
 from vectorstores import MyFAISS
-from langchain.document_loaders import UnstructuredFileLoader, TextLoader
+from langchain.document_loaders import UnstructuredFileLoader, TextLoader,CSVLoader
 from configs.model_config import *
 import datetime
 from textsplitter import ChineseTextSplitter
@@ -28,7 +28,7 @@ import models.shared as shared
 from agent import bing_search
 
 from functools import lru_cache
-
+from langchain.docstore.document import Document
 
 # patch HuggingFaceEmbeddings to make it hashable
 def _embeddings_hash(self):
@@ -218,8 +218,9 @@ class LocalDocQA:
                 torch_gc()
             else:
                 if not vs_path:
-                    vs_path = os.path.join(VS_ROOT_PATH,
-                                           f"""{"".join(lazy_pinyin(os.path.splitext(file)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""")
+                    vs_path = os.path.join(KB_ROOT_PATH,
+                                           f"""{"".join(lazy_pinyin(os.path.splitext(file)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
+                                           "vector_store")
                 vector_store = MyFAISS.from_documents(docs, self.embeddings)  # docs 为Document列表
                 torch_gc()
 
@@ -227,8 +228,8 @@ class LocalDocQA:
             return vs_path, loaded_files
         else:
             logger.info("文件均未成功加载，请检查依赖包或替换为其他文件再次上传。")
-            # 如果len(docs) !> 0, loaded_files必然是[]，因此也无需返回
-            # 与上文的错误返回一致，对下游判断更友好
+            # 若len(docs) !> 0，必然是所有文件均未加载成功，loaded_files必然为[]，返回没有实际意义
+            # 而若只返回None,可以跟上文的异常返回值保持一致，更便于下游任务判断
             return None
 
     def one_knowledge_add(self, vs_path, one_title, one_conent, one_content_segmentation, sentence_size):
@@ -335,6 +336,31 @@ class LocalDocQA:
                         "result": resp,
                         "source_documents": result_docs}
             yield response, history
+
+    def delete_file_from_vector_store(self,
+                                      filepath: str or List[str],
+                                      vs_path):
+        vector_store = load_vector_store(vs_path, self.embeddings)
+        status = vector_store.delete_doc(filepath)
+        return status
+
+    def update_file_from_vector_store(self,
+                                      filepath: str or List[str],
+                                      vs_path,
+                                      docs: List[Document],):
+        vector_store = load_vector_store(vs_path, self.embeddings)
+        status = vector_store.update_doc(filepath, docs)
+        return status
+
+    def list_file_from_vector_store(self,
+                                    vs_path,
+                                    fullpath=False):
+        vector_store = load_vector_store(vs_path, self.embeddings)
+        docs = vector_store.list_docs()
+        if fullpath:
+            return docs
+        else:
+            return [os.path.split(doc)[-1] for doc in docs]
 
 
 if __name__ == "__main__":
