@@ -161,7 +161,8 @@ class LoaderCheckPoint:
         elif self.is_llamacpp:
 
             try:
-                from models.extensions.llamacpp_model_alternative import LlamaCppModel
+                from llama_cpp import llama
+                from llama_cpp import tokenize as tokenizer
 
             except ImportError as exc:
                 raise ValueError(
@@ -172,7 +173,7 @@ class LoaderCheckPoint:
             model_file = list(checkpoint.glob('ggml*.bin'))[0]
             print(f"llama.cpp weights detected: {model_file}\n")
 
-            model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+            model = llama(model_file)
             return model, tokenizer
 
         elif self.load_in_8bit:

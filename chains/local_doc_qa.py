@@ -10,6 +10,7 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 # 也有开发者做了 Go-Faiss ，来满足 Golang 场景下的 faiss 使用。
 from vectorstores import MyFAISS
 from langchain.document_loaders import UnstructuredFileLoader, TextLoader,CSVLoader
+# # api.pyimport LocalDocQA-> loader.LoaderCheckPoint -> configs.model_config.py(打印模型基础配信息)
 from configs.model_config import *
 import datetime
 from textsplitter import ChineseTextSplitter
@@ -23,6 +24,8 @@ from loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from models.base import (BaseAnswer,
                          AnswerResult)
 from models.loader.args import parser
+
+
 from models.loader import LoaderCheckPoint
 import models.shared as shared
 from agent import bing_search

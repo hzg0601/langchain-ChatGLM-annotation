@@ -38,7 +38,9 @@ def loaderLLM(llm_model: str = None, no_remote_model: bool = False, use_ptuning_
         loaderCheckPoint.unload_model()
     else:
         loaderCheckPoint.reload_model()
-
+    # 向models模块添加ll_model_info["provides"]属性，而llm_model_info['provides']包括
+    # fastchat_openai_llm.py,llama_llm.py,moss_llm.py,shared.py,chatglm_llm.py
+    # 
     provides_class = getattr(sys.modules['models'], llm_model_info['provides'])
     modelInsLLM = provides_class(checkPoint=loaderCheckPoint)
     if 'FastChatOpenAILLM' in llm_model_info["provides"]:

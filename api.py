@@ -20,7 +20,9 @@ from pydantic import BaseModel
 from typing_extensions import Annotated
 # Starlette 是一个轻量级的 ASGI 框架和工具包，特别适合用来构建高性能的 asyncio 服务
 from starlette.responses import RedirectResponse
-
+# 从此开始处加载模型基础配置，打印加载信息
+# 其调用路径是从local_doc_qa.py开始调用from configs.model_config import *，model_config里实现的
+# 打印是因为import *才执行，因此不会多次执行
 from chains.local_doc_qa import LocalDocQA
 from configs.model_config import (KB_ROOT_PATH, EMBEDDING_DEVICE,
                                   EMBEDDING_MODEL, NLTK_DATA_PATH,

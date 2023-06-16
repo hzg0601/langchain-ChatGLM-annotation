@@ -9,7 +9,25 @@ nltk.data.path = [NLTK_DATA_PATH] + nltk.data.path
 
 # Show reply with source text from input document
 REPLY_WITH_SOURCE = True
-
+"""
+模型的调用逻辑：
+1. from configs.model_config import *时，加载所有配置信息，同时打印llm_device等基础配置信息；
+2. from models.loaders.args import parser,加载命令行配置信息；
+3. shared.loaderCheckPoint = LoaderCheckPoint(args_dict),初始化LoaderCheckPoint，并赋值给shared.loaderCheckPoint
+4. 实例化shared.loaderLLM，shared.py import configs.model_config.llm_model_dict,llm_model_dict将模型其他配置信息
+    传给LoaderCheckPoint,基于provides信息，LoaderCheckPoint调用unload_model或reload_model方法:
+    若调用unload_model则依次删除model和tokenizer，因此该方法适用于远程调用
+    若调用reload_model则依次调用_load_model_config，_load_model，可选调用_add_lora_to_model，
+    _load_model方法加载模型的检查点，分布式部署,load_in_8bit等行为。
+5. shared.loaderLLM类，向models模块添加ll_model_info["provides"]属性，而llm_model_info['provides']包括
+    fastchat_openai_llm.py,llama_llm.py,moss_llm.py,chatglm_llm.py等脚本里定义的LLM类，
+    这些LLM类都统一定义了generatorAnswer方法，generatorAnswer方法调用_call方法，_call方法调用
+    model.generate方法或openai.ChatCompletion.create方法, llm_model_info['provides']的LLM类在接受LoaderCheckPoint后实例化，即可供调用。
+    实例化的llm_model_info['provides']的LLM类取别名为llm_model_ins。
+6. 然后脚本再实例化LocalDocQA,LocalDocQA的init_cfg方法接受llm_model_ins作为llm模型，然后接受EMBEDDING_MODEL
+    EMBEDDING_DEVICE等参数初始化embedding模型。
+    至此，完成llm模型和embedding模型的初始化。
+"""
 
 def main():
 
