@@ -31,6 +31,7 @@ openai
 # 不过！！！本项目模型加载的方式控制的比较严格，与llama-cpp-python的兼容性较差，很多参数设定不能使用，
 # 建议如非必要还是不要使用llama-cpp
 torch~=2.0.0
+# 如果抛出TypeError: issubclass() arg 1 must be a class，使用conda install pydantic -c conda-forge安装1.10.9版本
 pydantic~=1.10.7
 starlette~=0.26.1
 numpy~=1.23.5

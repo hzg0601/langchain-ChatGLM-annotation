@@ -12,17 +12,21 @@ logging.basicConfig(format=LOG_FORMAT)
 # 在以下字典中修改属性值，以指定本地embedding模型存储位置
 # 如将 "text2vec": "GanymedeNil/text2vec-large-chinese" 修改为 "text2vec": "User/Downloads/text2vec-large-chinese"
 # 此处请写绝对路径
+# linux的默认路径在.cache/torch/sentence_transformers/下
+
+#! 实测无论使用什么模型，都是加载的默认的BertModel,因为加载sentence_transformers模型需要modules.json文件
+#! 而在huggingface_hub中大多数模型都没有提供这个文件
 embedding_model_dict = {
     "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
     "ernie-base": "nghuyong/ernie-3.0-base-zh",
     "text2vec-base": "shibing624/text2vec-base-chinese",
     "text2vec": "GanymedeNil/text2vec-large-chinese",
     "m3e-small": "moka-ai/m3e-small",
-    "m3e-base": "moka-ai/m3e-base",
+    "m3e-base": "/home/huangzhiguo/.cache/torch/sentence_transformers/moka-ai_m3e-base/",
 }
 
 # Embedding model name
-EMBEDDING_MODEL = "text2vec"
+EMBEDDING_MODEL = "m3e-base"
 
 # Embedding running device
 EMBEDDING_DEVICE = "cpu" #"cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
