@@ -2,7 +2,7 @@
 
 1. 未本地提前下载模型的情况下，自动重复下载并加载模型.
 
-   国内加载模型经常出现ConnectionError,所以需要多次重复下载多次调用LoadClass.from_pretrained加载模型，直至成功或超过 `max_try`次
+   国内加载模型经常出现ConnectionError,所以需要多次重复下载多次调用AutoClass.from_pretrained加载模型，直至成功或超过 `max_try`次
 2. 增加了llama-cpp模型的支持。
    llama-cpp模型需要在loader.py中调用llama-cpp-python中的Llama类，并使设定的参数兼容Llama类的generate方法，基于不
    同时期的ggml 格式手动下载llama-cpp-python版本，重新InvalidScoreLogitsProcessor类，转换输入input_ids的格式等操作。
