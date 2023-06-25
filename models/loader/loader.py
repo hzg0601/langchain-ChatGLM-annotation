@@ -12,6 +12,39 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
 from configs.model_config import LLM_DEVICE
 
 
+def recursively_load_model(LoaderClass,
+                           checkpoint,
+                           config=None,
+                           torch_dtype=None,
+                           trust_remote_code=True, 
+                           resume_download=True,
+                           max_try=30,
+                           kwargs=None):
+    """国内加载模型经常出现ConnectionError,所以需要多次重复下载
+        多次调用LoadClass.from_pretrained加载模型，直至成功或超过`max_try`次
+    """
+    try_turn = 0
+    while True:
+        try:
+            if config is not None:
+                model = LoaderClass.from_pretrained(checkpoint,
+                                             config=config,
+                                             torch_dtype=torch_dtype,
+                                             trust_remote_code=trust_remote_code,
+                                             resume_download=resume_download) 
+            else:
+                model = LoaderClass.from_pretrained(checkpoint,**kwargs)
+            return model
+        except Exception as e:
+            print("Download model failed, re-downloading...")
+            try_turn += 1
+            if try_turn > max_try:
+                print("The number of retries exceeded `max_try`,maybe you are offline, please check the network.")
+                raise ConnectionError
+            else:
+                continue    
+    
+
 class LoaderCheckPoint:
     """
     加载自定义 model CheckPoint
@@ -124,26 +157,29 @@ class LoaderCheckPoint:
                 num_gpus = torch.cuda.device_count()
                 if num_gpus < 2 and self.device_map is None:
                     model = (
-                        LoaderClass.from_pretrained(checkpoint,
-                                                    config=self.model_config,
-                                                    torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
-                                                    trust_remote_code=True)
+                        recursively_load_model(LoaderClass,
+                                               checkpoint,
+                                                config=self.model_config,
+                                                torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
+                                                trust_remote_code=True)
                         .half()
                         .cuda()
                     )
                 # 支持自定义cuda设备
                 elif ":" in self.llm_device:
-                    model = LoaderClass.from_pretrained(checkpoint,
-                                                    config=self.model_config,
-                                                    torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
-                                                    trust_remote_code=True).half().to(self.llm_device)
+                    model = recursively_load_model(LoaderClass,
+                                             checkpoint,
+                                            config=self.model_config,
+                                            torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
+                                            trust_remote_code=True).half().to(self.llm_device)
                 else:
                     from accelerate import dispatch_model,infer_auto_device_map
 
-                    model = LoaderClass.from_pretrained(checkpoint,
-                                                        config=self.model_config,
-                                                        torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
-                                                        trust_remote_code=True).half()
+                    model = recursively_load_model(LoaderClass,
+                                             checkpoint,
+                                            config=self.model_config,
+                                            torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
+                                            trust_remote_code=True).half()
                     # 可传入device_map自定义每张卡的部署情况
                     if self.device_map is None:
                         if 'chatglm' in model_name.lower():
@@ -162,7 +198,8 @@ class LoaderCheckPoint:
                     model = dispatch_model(model, device_map=self.device_map)
             else:
                 model = (
-                    LoaderClass.from_pretrained(
+                    recursively_load_model(
+                        LoaderClass,
                         checkpoint,
                         config=self.model_config,
                         trust_remote_code=True)
@@ -237,8 +274,9 @@ class LoaderCheckPoint:
                 # 然后加载下载的检查点，oad_checkpoint_and_dispatch()，它将允许你在你的空模型中加载一个检查点。这支持完整的检查点（一个单个文件包含整个状态描述）以及分片检查点。
                 # 它还会在你可用的设备（GPU、CPURAM）上自动分配这些权重，所以如果你正在加载一个分片检查点，最大的RAM使用量将是最大分片的大小。
                 # https://www.cnblogs.com/xiximayou/p/17345539.html
-                model = LoaderClass.from_pretrained(checkpoint, **params)
-            # 可以通过hf_device_map来查看accelearte挑选的设备图
+                model = recursively_load_model(LoaderClass,
+                           checkpoint,kwargs=params)
+            # 可以通过hf_device_map来查看accelerate挑选的设备图
             except ImportError as exc:
                 raise ValueError(
                     "如果开启了8bit量化加载,项目无法启动，参考此位置，选择合适的cuda版本，https://github.com/TimDettmers/bitsandbytes/issues/156"
@@ -250,11 +288,13 @@ class LoaderCheckPoint:
                 "Warning: self.llm_device is False.\nThis means that no use GPU  bring to be load CPU mode\n")
             try:
                 params = {"low_cpu_mem_usage": True, "torch_dtype": torch.float32, "trust_remote_code": True}
-                model = LoaderClass.from_pretrained(checkpoint, **params).to(self.llm_device, dtype=float)
+                model = recursively_load_model(LoaderClass,
+                           checkpoint,kwargs=params).to(self.llm_device, dtype=float)
             except RuntimeError as e:
                 print(e)
                 params = {"low_cpu_mem_usage": False, "torch_dtype": torch.float32, "trust_remote_code": True}
-                model = LoaderClass.from_pretrained(checkpoint, **params).to(self.llm_device, dtype=float)
+                model = recursively_load_model(LoaderClass,
+                           checkpoint,kwargs=params).to(self.llm_device, dtype=float)
             except Exception as e:
                 print(e)
 
