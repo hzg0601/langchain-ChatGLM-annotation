@@ -23,7 +23,7 @@ META_INSTRUCTION = \
 # todo 在MOSSLLM类下，各模型的响应速度很慢，后续要检查一下原因
 class MOSSLLM(BaseAnswer, LLM, ABC):
     max_token: int = 2048
-    temperature: float = 0.7
+    temperature: float = 0.01
     top_p = 0.8
     # history = []
     checkPoint: LoaderCheckPoint = None
@@ -57,28 +57,31 @@ class MOSSLLM(BaseAnswer, LLM, ABC):
                          streaming: bool = False):
         if len(history) > 0:
             history = history[-self.history_len:] if self.history_len > 0 else []
-            prompt_w_history = str(history)
-            prompt_w_history += '<|Human|>: ' + prompt + '<eoh>'
+            prompt_w_history = "".join(history)
+            prompt_w_history += self.checkPoint.tokenizer.bos_token + prompt + self.checkPoint.tokenizer.eos_token
         else:
-            prompt_w_history = META_INSTRUCTION.replace("MOSS", self.checkPoint.model_name.split("/")[-1])
-            prompt_w_history += '<|Human|>: ' + prompt + '<eoh>'
+
+            prompt_w_history = self.checkPoint.tokenizer.bos_token + prompt + self.checkPoint.tokenizer.eos_token
 
         inputs = self.checkPoint.tokenizer(prompt_w_history, return_tensors="pt")
         with torch.no_grad():
             # max_length似乎可以设的小一些，而repetion_penalty应大一些，否则chatyuan,bloom等模型为满足max会重复输出
-            # 
+            # todo moss, baichuan-7b都没有提供chat或stream-chat方法，因此不支持聊天
+            # todo 后续可以看一下chatglm的chat和stream-chat是怎么实现的
             outputs = self.checkPoint.model.generate(
                 inputs.input_ids.cuda(),
                 attention_mask=inputs.attention_mask.cuda(),
                 max_length=self.max_token,
                 do_sample=True,
-                top_k=40,
+                top_k=10,
                 top_p=self.top_p,
                 temperature=self.temperature,
-                repetition_penalty=1.02,
+                repetition_penalty=1.2,
                 num_return_sequences=1,
-                eos_token_id=106068,
-                pad_token_id=self.checkPoint.tokenizer.pad_token_id)
+                max_new_tokens=64
+                # eos_token_id=106068,
+                # pad_token_id=self.checkPoint.tokenizer.pad_token_id
+                )
             response = self.checkPoint.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
             self.checkPoint.clear_torch_cache()
             history += [[prompt, response]]
