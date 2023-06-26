@@ -89,7 +89,7 @@ llm_model_dict = {
     },
     "vicuna-13b-hf": {
         "name": "vicuna-13b-hf",
-        "pretrained_model_name": "TheBloke/vicuna-13B-1.1-HF/",
+        "pretrained_model_name": "TheBloke/vicuna-13B-1.1-HF",
         "local_model_path": None,
         "provides": "LLamaLLM"
     },    
@@ -173,7 +173,7 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "chatglm2-6b"
+LLM_MODEL = "vicuna-13b-hf"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = False
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
