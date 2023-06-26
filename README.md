@@ -1,6 +1,8 @@
 截止2023-06-26新增的特性/修复的bug包括：
 
 1. 支持chatglm2-6b的多卡部署。
+
+   **在cli_demo.py中测试**
 2. 未本地提前下载模型的情况下，自动重复下载并加载模型.
 
    国内加载模型经常出现ConnectionError,所以需要多次重复下载多次调用AutoClass.from_pretrained加载模型，直至成功或超过 `max_try`次
