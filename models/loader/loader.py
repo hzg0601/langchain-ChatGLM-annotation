@@ -204,8 +204,8 @@ class LoaderCheckPoint:
                         else:
                             # 对于chaglm和moss意外的模型应使用自动指定，而非调用chatglm的配置方式
                             # 其他模型定义的层类几乎不可能与chatglm和moss一致，使用chatglm_auto_configure_device_map
-                            # 百分百会报错，使用infer_auto_device_map虽然可能导致负载不均衡，但至少不会报错
-                            # 实测在bloom模型上如此
+                            # 百分百会报错，使用infer_auto_device_map虽然可能导致负载不均衡，划掉~但至少不会报错~
+                            # 实测部分模型还是会报错，只能说是增加了一些成功机会吧
                             # print(dir(model))
                             # print("*"*80)
                             # model.tie_weights()
