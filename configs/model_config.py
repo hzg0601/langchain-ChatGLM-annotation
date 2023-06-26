@@ -81,6 +81,12 @@ llm_model_dict = {
         "local_model_path": None,
         "provides": "MOSSLLM"
     },
+    "moss-int8":{
+        "name": "moss-int8",
+        "pretrained_model_name": "fnlp/moss-moon-003-sft-int8",
+        "local_model_path":None,
+        "provides": "MOSSLLM"
+    },
     "vicuna-13b-hf": {
         "name": "vicuna-13b-hf",
         "pretrained_model_name": "vicuna-13b-hf",
@@ -167,7 +173,7 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "moss"
+LLM_MODEL = "moss-int8"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = False
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
