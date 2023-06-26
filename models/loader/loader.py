@@ -18,7 +18,7 @@ def recursively_load_model(LoaderClass,
                            torch_dtype=None,
                            trust_remote_code=True, 
                            resume_download=True,
-                           max_try=30,
+                           max_try=300,
                            kwargs=None):
     """国内加载模型经常出现ConnectionError,所以需要多次重复下载
         多次调用LoadClass.from_pretrained加载模型，直至成功或超过`max_try`次
