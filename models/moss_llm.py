@@ -68,6 +68,9 @@ class MOSSLLM(BaseAnswer, LLM, ABC):
             # max_length似乎可以设的小一些，而repetion_penalty应大一些，否则chatyuan,bloom等模型为满足max会重复输出
             # todo moss, baichuan-7b都没有提供chat或stream-chat方法，因此不支持聊天
             # todo 后续可以看一下chatglm的chat和stream-chat是怎么实现的
+            # chatglm的模板 "[Round {}]\n问：{}\n答：{}\n".format(i, old_query, response)
+            # 此外chatglm还有logits_processor实例
+            # todo 定义一个chat和stream-chat方法
             outputs = self.checkPoint.model.generate(
                 inputs.input_ids.cuda(),
                 attention_mask=inputs.attention_mask.cuda(),
@@ -78,7 +81,8 @@ class MOSSLLM(BaseAnswer, LLM, ABC):
                 temperature=self.temperature,
                 repetition_penalty=1.2,
                 num_return_sequences=1,
-                max_new_tokens=64
+                max_new_tokens=64,
+                num_beams=1
                 # eos_token_id=106068,
                 # pad_token_id=self.checkPoint.tokenizer.pad_token_id
                 )
