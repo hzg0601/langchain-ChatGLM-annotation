@@ -50,7 +50,7 @@
 11. 优化了[FEATURE][[FEATURE] bing搜索问答有流式的API么？ #617](https://github.com/imClumsyPanda/langchain-ChatGLM/issues/617)，增加了api.py的stream_chat_bing接口；
 12. 优化了api.py的stream_chat的接口,更改为在请求体中选择knowledge_base_id，从而无需两次指定knowledge_base_id；
 13. 优化了cli_demo.py的逻辑：
-    4.1 增加了输入提示；
-    4.2 支持多个文件输入；
-    4.3 支持文件输入错误有再次输入，而非直接因报错而退出；
-    4.4 支持部分文件因路径错误而未加载成功后，可选再次加载。
+    1 增加了输入提示；
+    2 支持多个文件输入；
+    3 支持文件输入错误有再次输入，而非直接因报错而退出；
+    4 支持部分文件因路径错误而未加载成功后，可选再次加载。
