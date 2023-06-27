@@ -336,7 +336,7 @@ default_theme_args = dict(
 # title,在浏览器窗口中打开时显示的选项卡标题
 # 应用于当前Blocks的自定义 css 或自定义 css 文件的路径
 
-with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title="chatglm-6b-webui-hzg") as demo:
+with gr.Blocks(css=block_css, theme=gr.themes.Soft(**default_theme_args,),title="问答webui") as demo:
     # 特殊的隐藏组件，用于存储同一用户运行演示时的会话状态。当用户刷新页面时，State 变量的值被清除。
     # 变量经过gr.State修饰后，相当于C的static变量，如num = gr.State(value=0)相当于 num = static 0
     # 在每次被调用后，如果值被修改，则保存被修改后的值
