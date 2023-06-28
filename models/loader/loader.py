@@ -145,7 +145,7 @@ class LoaderCheckPoint:
                     "本地模型local_model_path未配置路径"
                 )
 
-        self.is_llamacpp = len(list(Path(f'{checkpoint}').glob('ggml*.bin'))) > 0
+        self.is_llamacpp = len(list(Path(f'{checkpoint}').glob('*.ggml*.bin'))) > 0
         if 'chatglm' in model_name.lower() or "chatyuan" in model_name.lower():
             LoaderClass = AutoModel
         else:
@@ -191,7 +191,8 @@ class LoaderCheckPoint:
                             self.device_map = self.chatglm_auto_configure_device_map(num_gpus)
                         elif 'moss' in model_name.lower():
                             self.device_map = self.moss_auto_configure_device_map(num_gpus, model_name)
-                        elif "chatglm2" in model_name.lower():
+                            # todo (hzg0601) 优化guanaco-33b模型的GPU负载
+                        elif "chatglm2" in model_name.lower() or "guanaco-33b" in model_name.lower():
                             from accelerate.utils import get_balanced_memory
                             max_memory = get_balanced_memory(model, 
                                                                 dtype=torch.int8 if self.load_in_8bit else None,
@@ -236,10 +237,12 @@ class LoaderCheckPoint:
                     "Please install it with `pip install llama-cpp-python`."
                 ) from exc
 
-            model_file = list(checkpoint.glob('ggml*.bin'))[0]
+            model_file = list(checkpoint.glob('*.ggml*.bin'))[0]
             print(f"llama.cpp weights detected: {model_file}\n")
-
-            model = Llama(model_path=model_file._str)
+            if self.llm_device == "cpu":
+                model = Llama(model_path=model_file._str)
+            elif "cuda" in self.llm_device or "mpi" in self.llm_device:
+                model = Llama(model_path=model_file._str,n_gpu_layers=80)
 
             # 实测llama-cpp-vicuna13b-q5_1的AutoTokenizer加载tokenizer的速度极慢，应存在优化空间
             # 但需要对huggingface的AutoTokenizer进行优化

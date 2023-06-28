@@ -1,6 +1,12 @@
 2023-06-28新增的特性和修复的bug包括：
-1. 增加自动下载文件的脚步auto_recursive_download.py，可以自动断点重连下载文件；
+
+1. 增加自动下载文件的脚本auto_recursive_download.py，可以自动断点重连下载文件；
 2. 增加批量修改huggingface_hub下载的文件名的shell脚本batch_rename_real_files.sh.(但有时不能成功，与shell脚本所处的环境有关，暂不清楚具体原因)
+3. 增加对guanaco-65-q5量化模型的支持。
+   1. 但推理速度巨慢。。。。。原因可能是模型默认加载到内存里，虽然支持部分层offload到显存中，但由于cpu-gpu通讯等原因拖慢了推理速度
+4. 增加对guanaco-33b的支持。
+   1. 加载模型需要约67-70G显存/内存，建议开启--load-in-8bit参数，推理速度也很慢，但实测效果较chatglm,moss,baichuan等模型要好不少。
+   2. 默认的多GPU部署方案负载极不均衡，有待进一步优化。
 
 2023-06-27新增的特性和修复的bug包括：
 

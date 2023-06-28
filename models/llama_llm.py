@@ -176,8 +176,12 @@ class LLamaLLM(BaseAnswer, LLM, ABC):
             common_kwargs_keys = set(inspect.getfullargspec(self.checkPoint.model.generate).args)&set(gen_kwargs.keys())
             common_kwargs = {key:gen_kwargs[key] for key in common_kwargs_keys}
             #? llama-cpp模型的generate方法似乎只接受.cpu类型的输入，响应很慢，慢到哭泣
-            #?为什么会不支持GPU呢，不应该啊？
-            output_ids = torch.tensor([list(self.checkPoint.model.generate(input_id_i.cpu(),**common_kwargs)) for input_id_i in input_ids])
+            #?为什么会不支持GPU呢，不应该啊？-> 默认的n_gpu_layers = 0
+            # 如果设置n_gup_layers > 0 则可以使用cuda进行计算，但速度同样很慢
+            if self.checkPoint.llm_device == "cpu":
+                output_ids = torch.tensor([list(self.checkPoint.model.generate(input_ids_i.cpu(),**common_kwargs)) for input_ids_i in input_ids])
+            else:
+                output_ids = torch.tensor([list(self.checkPoint.model.generate(input_ids_i,**common_kwargs)) for input_ids_i in input_ids])
 
         else:
             output_ids = self.checkPoint.model.generate(**gen_kwargs)

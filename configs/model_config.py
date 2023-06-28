@@ -136,8 +136,9 @@ llm_model_dict = {
     # 占用约50G内存/显存
     "guanaco-65b-q5-k-m":{
         "name": "guanaco-65b-q5-k-m",
-        "pretrained_model_name":"TheBloke/guanaco-65B-GGML",
-        "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--vicuna--ggml-vicuna-13b-1.1/blobs/''',
+        # 用于加载tokenizer,用的是llama-65b
+        "pretrained_model_name":"huggyllama/llama-65b",
+        "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--guanaco-65B-GGML/blobs/''',
         "provides": "LLamaLLM"
     },
     # 占用约65-70G内存，--load-in-int8,约占用35G显存
@@ -186,9 +187,9 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "baichuan-7b"
+LLM_MODEL = "guanaco-65b-q5-k-m"
 # 量化加载8bit 模型
-LOAD_IN_8BIT = False
+LOAD_IN_8BIT = True
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
 BF16 = False
 # 本地lora存放的位置
