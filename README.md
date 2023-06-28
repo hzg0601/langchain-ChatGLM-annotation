@@ -1,3 +1,7 @@
+2023-06-28新增的特性和修复的bug包括：
+1. 增加自动下载文件的脚步auto_recursive_download.py，可以自动断点重连下载文件；
+2. 增加批量修改huggingface_hub下载的文件名的shell脚本batch_rename_real_files.sh.(但有时不能成功，与shell脚本所处的环境有关，暂不清楚具体原因)
+
 2023-06-27新增的特性和修复的bug包括：
 
 1. 修改了moss, baichuan,chatyuan,bloom模型的元prompt；
@@ -15,9 +19,9 @@
 截止2023-06-20新增的特征和修复的bug,包括：
    **在cli_demo.py中测试**
 
-1. 未本地提前下载模型的情况下，自动重复下载并加载模型.
+1. 未本地提前下载模型的情况下，自动断点重连下载并加载模型.
 
-   国内加载模型经常出现ConnectionError,所以需要多次重复下载多次调用AutoClass.from_pretrained加载模型，直至成功或超过 `max_try`次
+   国内加载模型经常出现ConnectionError,所以需要多次下载多次调用AutoClass.from_pretrained加载模型，直至成功或超过 `max_try`次
 2. 增加了llama-cpp模型的支持。
    llama-cpp模型需要在loader.py中调用llama-cpp-python中的Llama类，并使设定的参数兼容Llama类的generate方法，基于不
    同时期的ggml 格式手动下载llama-cpp-python版本，重新InvalidScoreLogitsProcessor类，转换输入input_ids的格式等操作。

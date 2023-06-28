@@ -133,7 +133,20 @@ llm_model_dict = {
         "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--vicuna--ggml-vicuna-13b-1.1/blobs/''',
         "provides": "LLamaLLM"
     },
-
+    # 占用约50G内存/显存
+    "guanaco-65b-q5-k-m":{
+        "name": "guanaco-65b-q5-k-m",
+        "pretrained_model_name":"TheBloke/guanaco-65B-GGML",
+        "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--vicuna--ggml-vicuna-13b-1.1/blobs/''',
+        "provides": "LLamaLLM"
+    },
+    # 占用约65-70G内存，--load-in-int8,约占用35G显存
+    "guanaco-33b":{
+        "name": "",
+        "pretrained_model_name": "timdettmers/guanaco-33b-merged",
+        "local_model_path":None,
+        "provides": "LLamaLLM"
+    },
     # 通过 fastchat 调用的模型请参考如下格式
     "fastchat-chatglm-6b": {
         "name": "chatglm-6b",  # "name"修改为fastchat服务中的"model_name"
