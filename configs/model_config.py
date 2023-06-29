@@ -14,7 +14,7 @@ logging.basicConfig(format=LOG_FORMAT)
 # 此处请写绝对路径
 # linux的默认路径在.cache/torch/sentence_transformers/下
 
-#! 实测无论使用什么模型，都是加载的默认的BertModel,因为加载sentence_transformers模型需要modules.json文件
+#! 实测无论使用什么模型，都是加载的默认的MeanPooling,因为加载sentence_transformers模型需要modules.json文件
 #! 而在huggingface_hub中大多数模型都没有提供这个文件
 embedding_model_dict = {
     "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
@@ -143,7 +143,7 @@ llm_model_dict = {
     },
     # 占用约65-70G内存，--load-in-int8,约占用35G显存
     "guanaco-33b":{
-        "name": "",
+        "name": "guanaco-33b",
         "pretrained_model_name": "timdettmers/guanaco-33b-merged",
         "local_model_path":None,
         "provides": "LLamaLLM"
@@ -187,11 +187,11 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "bloomz-7b1"
+LLM_MODEL = "guanaco-33b"
 # 量化加载8bit 模型
-LOAD_IN_8BIT = False
+LOAD_IN_8BIT = True
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
-BF16 = False
+BF16 = True
 # 本地lora存放的位置
 LORA_DIR = "loras/"
 

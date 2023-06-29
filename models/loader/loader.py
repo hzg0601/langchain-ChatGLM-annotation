@@ -191,7 +191,7 @@ class LoaderCheckPoint:
                             self.device_map = self.chatglm_auto_configure_device_map(num_gpus)
                         elif 'moss' in model_name.lower():
                             self.device_map = self.moss_auto_configure_device_map(num_gpus, model_name)
-                            # todo (hzg0601) 优化guanaco-33b模型的GPU负载
+                            # todo (hzg0601) 优化guanaco-33b模型的GPU负载 -> done
                         elif "chatglm2" in model_name.lower() or "guanaco-33b" in model_name.lower():
                             from accelerate.utils import get_balanced_memory
                             max_memory = get_balanced_memory(model, 
@@ -336,9 +336,12 @@ class LoaderCheckPoint:
             except Exception as e:
                 print(e)
                 pass
-
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
-
+        # 如果报出ecursionError: maximum recursion depth exceeded,use_fast参数改为False
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
+        except RecursionError as e:
+            print(e)
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True,use_fast=False)
         print(f"Loaded the model in {(time.time() - t0):.2f} seconds.")
         return model, tokenizer
 
