@@ -1,8 +1,12 @@
+"""
+可以同该脚本下载repo或文件，如果max_try设的很大仍不能成功，只能手动下载文件，然后用batch_create_soft_link.sh脚本建立软链接
+"""
 from huggingface_hub import hf_hub_download, snapshot_download
 import os 
 import shutil
 import subprocess
-
+import argparse
+from typing import Union
 def recursively_load_model(LoaderClass,
                            checkpoint,
                            config=None,
@@ -46,7 +50,7 @@ def recursive_download_file(repo_id,
                             local_dir_use_symlinks=False,
                             cache_dir=None,
                             local_dir=None,
-                            rename_dir=True,
+                            rename_files=False,
                             max_try=300):
     """
     自动短点重下指定文件直至成功
@@ -56,7 +60,7 @@ def recursive_download_file(repo_id,
     cache_dir:指定缓存地址
     local_dir: 指定本地存在地址
     local_dir_use_symlinks: 比较复杂，简言之是是否建立`local_dir`和`cache_dir`的软链接
-    rename_dir: 是否将下载的文件名改为真实文件名，若True，则使用默认地址，若str,则该参数需指向真实文件所在的地址；
+    rename_files: 是否将下载的文件名改为真实文件名，若True，则使用默认地址，若str,则该参数需指向真实文件所在的地址；
                 下载的huggingface文件通常会被重命名为一个随机文件名，然后用软链接的方式链接真实文件名，
                 此参数运行将随机文件名改为真实文件名，
                 #! 有时能成功有时不能成功，可能跟shell脚本所处的环境有关
@@ -91,14 +95,14 @@ def recursive_download_file(repo_id,
             
             print("download file or repo succeed!")
             
-            if rename_dir: 
-                rename_dir = "/".join(file_dir.split("/")[:-1]) if isinstance(rename_dir,bool) else rename_dir
+            if rename_files: 
+                rename_files = "/".join(file_dir.split("/")[:-1]) if isinstance(rename_files,bool) else rename_files
 
-                copy_shell_name = os.path.join(rename_dir,"batch_rename_real_files.sh")
+                copy_shell_name = os.path.join(rename_files,"batch_rename_real_files.sh")
                 # 将目录下的batch_rename_real_files.sh移至真实文件所在文件夹下
                 shutil.copyfile("./batch_rename_real_files.sh",copy_shell_name)
                 current_path = os.getcwd()
-                os.chdir(rename_dir)
+                os.chdir(rename_files)
                 # 实测用python执行shell脚本，其中的readlink -f link或realpath link命名不能获取
                 # 真实地址，而是只能得到软连接的地址
                 # todo 查查该怎么操作以及为什么会这样
@@ -115,4 +119,18 @@ def recursive_download_file(repo_id,
                 continue 
         
 if __name__ == "__main__":
-    recursive_download_file(repo_id="TheBloke/guanaco-65B-GGML",filename="guanaco-65B.ggmlv3.q5_K_M.bin")
+    parser = argparse.ArgumentParser(prog="auto download from huggingface_hub",description="自动从huggingface hub下载文件")
+    parser.add_argument("--repo-id",type=str,default="bigscience/tokenizer")
+    parser.add_argument("--filename",type=str,default=None)
+    parser.add_argument("--cache-dir",type=str,default=None)
+    parser.add_argument('--repo-type',type=str,default="model")
+    parser.add_argument('--local-dir',type=str,default=None)
+    parser.add_argument('--local-dir-use-symlinks',type=bool, default=False)
+
+    parser.add_argument("--rename-files",type=Union[bool,str,None],default=False,
+                        help="""whether to rename the downloaded file, if True, use huggingface_hub's default directory; 
+                        if str,input the directory of the soft links""")
+    parser.add_argument("--max-try",type=int,default=300)
+    args = parser.parse_args()
+    args_dict = vars(args)
+    recursive_download_file(**args_dict)

@@ -25,7 +25,7 @@ meta_prompt = """
 如果你知道答案，请直接给出你的回答！
 如果你不知道答案，请你只回答:我暂时还不能回答问题，
 除此之外不要回答其他任何内容。
-下面请始终用中文回答我上面提出的问题:{}"""
+下面请始终用中文回答我提出的问题:{}"""
 
 def process_response(response):
     response = response.strip()
@@ -101,7 +101,20 @@ def chat(model,
         prompt += "[Round {}]\n问：{}\n答：".format(len(history), query)
     inputs = tokenizer([prompt], return_tensors="pt")
     inputs = inputs.to(model.device)
-    outputs = model.generate(**inputs, **gen_kwargs)
+    try:
+        # 如果报出ValueError: Couldn't instantiate the backend tokenizer from one of:，
+        # 是因为文件没有下全，缺少了tokenizer.json文件
+        outputs = model.generate(**inputs, **gen_kwargs)
+    except ValueError as e:
+        # 某些模型会由于tokenizer报出
+        # ValueError: The following `model_kwargs` are not used by the model: ['token_type_ids']
+        print(e)
+        inputs.pop("token_type_ids")
+        outputs = model.generate(**inputs, **gen_kwargs)
+    except RuntimeError as e:
+        print(e)
+        # 某些模型会报出RuntimeError: "topk_cpu" not implemented for 'Half'
+        outputs = model.float().generate(**inputs, **gen_kwargs)
     outputs = outputs.tolist()[0][len(inputs["input_ids"][0]):]
     response = tokenizer.decode(outputs)
     # response = process_response(response)

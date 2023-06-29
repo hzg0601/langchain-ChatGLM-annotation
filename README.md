@@ -1,8 +1,11 @@
 2023-06-29新增的特性和修复的bug包括：
 
-1. 修改guanaco-33b默认GPU复杂方案，GPU负载更均衡.
+1. 修改guanaco-33b默认GPU复载方案，GPU负载更均衡.
    1. 但加载guanaco-33b需要约63-65G显存/内存，强烈建议开启--load-in-8bit参数；
 2. 修改了--load-in-8bit参数下GPU负载方案，GPU负载更均衡。
+3. 修改auto_recursive_download.py的执行方式，改为使用命令行输入参数来指定下载的repo_id和文件。
+4. 增加了对bloomz-7b1的支持。
+5. 在moss_llm.py对启动bloomz-7b1的常见错误进行了注释说明。
 
 2023-06-28新增的特性和修复的bug包括：
 

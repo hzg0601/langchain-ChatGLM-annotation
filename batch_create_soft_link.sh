@@ -12,6 +12,10 @@ do
         target_link=$target_dir$file
         echo $source_file
         echo $target_link
-        ln -s $source_file $target_link
+        if [ -e source_file ];then
+            ln -s $source_file $target_link
+        else
+            echo "source_file $source_file doesn't exist."
+        fi
     fi
 done

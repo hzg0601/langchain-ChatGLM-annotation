@@ -335,8 +335,8 @@ class LoaderCheckPoint:
             except Exception as e:
                 print(e)
                 pass
-        else:
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
+
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
 
         print(f"Loaded the model in {(time.time() - t0):.2f} seconds.")
         return model, tokenizer
