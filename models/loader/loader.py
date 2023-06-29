@@ -242,7 +242,8 @@ class LoaderCheckPoint:
             if self.llm_device == "cpu":
                 model = Llama(model_path=model_file._str)
             elif "cuda" in self.llm_device or "mpi" in self.llm_device:
-                model = Llama(model_path=model_file._str,n_gpu_layers=80)
+                # 实测增加这个参数并不能让GPU利用率提高，应该是llama-cpp-python的问题
+                model = Llama(model_path=model_file._str,n_gpu_layers=2000)
 
             # 实测llama-cpp-vicuna13b-q5_1的AutoTokenizer加载tokenizer的速度极慢，应存在优化空间
             # 但需要对huggingface的AutoTokenizer进行优化
