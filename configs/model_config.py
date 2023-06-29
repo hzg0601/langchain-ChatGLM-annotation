@@ -187,9 +187,9 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "guanaco-65b-q5-k-m"
+LLM_MODEL = "guanaco-33b"
 # 量化加载8bit 模型
-LOAD_IN_8BIT = True
+LOAD_IN_8BIT = False
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
 BF16 = False
 # 本地lora存放的位置

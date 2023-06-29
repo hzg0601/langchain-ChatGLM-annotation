@@ -1,3 +1,9 @@
+2023-06-29新增的特性和修复的bug包括：
+
+1. 修改guanaco-33b默认GPU复杂方案，GPU负载更均衡.
+   1. 但加载guanaco-33b需要约63-65G显存/内存，强烈建议开启--load-in-8bit参数；
+2. 修改了--load-in-8bit参数下GPU负载方案，GPU负载更均衡。
+
 2023-06-28新增的特性和修复的bug包括：
 
 1. 增加自动下载文件的脚本auto_recursive_download.py，可以自动断点重连下载文件；

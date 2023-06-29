@@ -282,15 +282,18 @@ class LoaderCheckPoint:
             # 在transformer中用from_config加载模型并不绑定权重，这在加载不包含绑定权重的重复键的检查点时可能导致问题。所以你应该在加载检查点之前绑定权重。
 
             model.tie_weights()
-            if self.device_map is not None:
-                params['device_map'] = self.device_map
-            else:
-                # 似乎也可以直接用device_map = "auto"指定
-                params['device_map'] = infer_auto_device_map(
-                    model,
-                    dtype=torch.int8,
-                    no_split_module_classes=model._no_split_modules
-                )
+            # 前文已经指定了params['device_map'] = "auto"，这里重复了，
+            # 而且调用infer_auto_device_map会使负载不均衡
+            # 似乎"auto"和device_map = infer_auto_device_map机制不一样
+            # if self.device_map is not None:
+            #     params['device_map'] = self.device_map
+            # else:
+            #     # 似乎也可以直接用device_map = "auto"指定
+            #     params['device_map'] = infer_auto_device_map(
+            #         model,
+            #         dtype=torch.int8,
+            #         no_split_module_classes=model._no_split_modules
+            #     )
             try:
                 # 然后加载下载的检查点，oad_checkpoint_and_dispatch()，它将允许你在你的空模型中加载一个检查点。这支持完整的检查点（一个单个文件包含整个状态描述）以及分片检查点。
                 # 它还会在你可用的设备（GPU、CPURAM）上自动分配这些权重，所以如果你正在加载一个分片检查点，最大的RAM使用量将是最大分片的大小。
