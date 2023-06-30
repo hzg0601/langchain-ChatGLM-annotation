@@ -336,7 +336,7 @@ class LoaderCheckPoint:
             except Exception as e:
                 print(e)
                 pass
-        # 如果报出ecursionError: maximum recursion depth exceeded,use_fast参数改为False
+        # 如果报出RecursionError: maximum recursion depth exceeded,use_fast参数改为False
         try:
             tokenizer = AutoTokenizer.from_pretrained(checkpoint, trust_remote_code=True)
         except RecursionError as e:
