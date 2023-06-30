@@ -177,3 +177,4 @@ loader/tmp_files
 flagged/*
 /configs/*
 configs/model_config.py
+*.out

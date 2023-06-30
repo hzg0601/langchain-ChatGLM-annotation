@@ -130,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--rename-files",type=Union[bool,str,None],default=False,
                         help="""whether to rename the downloaded file, if True, use huggingface_hub's default directory; 
                         if str,input the directory of the soft links""")
-    parser.add_argument("--max-try",type=int,default=300)
+    parser.add_argument("--max-try",type=int,default=3000)
     args = parser.parse_args()
     args_dict = vars(args)
     recursive_download_file(**args_dict)
