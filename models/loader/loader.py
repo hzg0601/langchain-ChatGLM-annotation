@@ -243,6 +243,9 @@ class LoaderCheckPoint:
                 model = Llama(model_path=model_file._str)
             elif "cuda" in self.llm_device or "mpi" in self.llm_device:
                 # 实测增加这个参数并不能让GPU利用率提高，应该是llama-cpp-python的问题
+                # https://www.freesion.com/article/42621253579/ ->
+                #? 难道说要在llama-cpp-python中使用CUDA加速，需要用blas后端编译安装？->
+                # 实测并不是，CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install llama-cpp-python安装后一样很慢
                 model = Llama(model_path=model_file._str,n_gpu_layers=2000)
 
             # 实测llama-cpp-vicuna13b-q5_1的AutoTokenizer加载tokenizer的速度极慢，应存在优化空间

@@ -141,7 +141,13 @@ llm_model_dict = {
         "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--guanaco-65B-GGML/blobs/''',
         "provides": "LLamaLLM"
     },
-    # 占用约65-70G内存，--load-in-int8,约占用35G显存
+    "guanaco-65b-gptq":{
+        "name":"guanaco-65b-gptq",
+        "pretrained_model_name":"TheBloke/guanaco-65B-GPTQ",
+        "local_model_path":None,
+        "provides":"LLamaLLM"
+    },
+    # 占用约63-66G内存，--load-in-int8,约占用35G显存
     "guanaco-33b":{
         "name": "guanaco-33b",
         "pretrained_model_name": "timdettmers/guanaco-33b-merged",
