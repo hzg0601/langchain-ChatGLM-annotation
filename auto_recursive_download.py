@@ -18,7 +18,7 @@ def recursively_load_model(LoaderClass,
     """国内加载模型经常出现ConnectionError,所以需要多次重复下载
         多次调用LoadClass.from_pretrained加载模型，直至成功或超过`max_try`次
     """
-    try_turn = 0
+
     while True:
         try:
             
@@ -66,6 +66,10 @@ def recursive_download_file(repo_id,
                 #! 有时能成功有时不能成功，可能跟shell脚本所处的环境有关
     max_try: 最大重复下载次数，超过此值认为处于离线环境，抛出网络异常
     """
+    if local_dir and not os.path.exists(local_dir):
+        os.makedirs(local_dir)
+    if cache_dir and not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
     try_turn = 0
     while True:
         try:
@@ -110,6 +114,7 @@ def recursive_download_file(repo_id,
                 os.remove(copy_shell_name)
             return file_dir
         except Exception as e:
+            print(e)
             print("Download model failed, re-downloading...")
             try_turn += 1
             if try_turn > max_try:
