@@ -1,3 +1,9 @@
+2023-07-02新增的特性和修复的bug包括：
+
+1. 增加了通过winscp从windows转移huggingface hub的repo时出现重复上传数据的处理脚本batch_mv_data.sh
+
+似乎从6.30日天起，机构的网络已经不能从huggingface hub下载数据了，但从家庭网络似乎仍然勉强可以，因此增加了从家庭网络的windows设备向机构的linux服务器上传数据的需求，但通过WinSCP等工具上传会因为软连接的问题重复上传数据，因此需要进行处理，即先将blobs下的数据删除，再将snapshots下的数据转移到blobs下，然后建立二者的软连接。
+
 2023-06-29新增的特性和修复的bug包括：
 
 1. 修改guanaco-33b默认GPU复载方案，GPU负载更均衡.
