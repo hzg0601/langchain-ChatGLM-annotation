@@ -29,7 +29,10 @@ def recursively_load_model(LoaderClass,
         try:
             if "gptq" in checkpoint.lower():
 
-                from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+                from auto_gptq import AutoGPTQForCausalLM
+                # todo 使用cuda117的auto_gptq会报错：
+                # FatalError: `Access to an undefined portion of a memory object` is detected by the operating system.
+                # 尝试使用cu112的auto-gptq
                 model = AutoGPTQForCausalLM.from_quantized(checkpoint,
                             model_basename=model_basename,
                             device_map="auto",
