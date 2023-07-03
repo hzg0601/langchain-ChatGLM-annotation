@@ -32,6 +32,7 @@ def recursively_load_model(LoaderClass,
                 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
                 model = AutoGPTQForCausalLM.from_quantized(checkpoint,
                             model_basename=model_basename,
+                            device_map="auto",
                             use_safetensors=True,
                             trust_remote_code=True,
                             device="cuda",
@@ -71,6 +72,8 @@ class LoaderCheckPoint:
     tokenizer: object = None
     # 模型全路径
     model_path: str = None
+    # 适用于gptq类模型
+    model_basename:str = None
     model: object = None
     model_config: object = None
     lora_names: set = []
@@ -107,8 +110,8 @@ class LoaderCheckPoint:
         self.params = params or {}
         self.model_name = params.get('model_name', False)
         self.model_path = params.get('model_path', None)
-        # self.model_basename = params.get("model_basename",None)
-        self.no_remote_model = params.get('no_remote_model', False)
+        self.model_basename = params.get("model_basename",None)
+
         self.lora = params.get('lora', '')
         self.use_ptuning_v2 = params.get('use_ptuning_v2', False)
         self.lora_dir = params.get('lora_dir', '')
@@ -316,8 +319,10 @@ class LoaderCheckPoint:
                 # 然后加载下载的检查点，oad_checkpoint_and_dispatch()，它将允许你在你的空模型中加载一个检查点。这支持完整的检查点（一个单个文件包含整个状态描述）以及分片检查点。
                 # 它还会在你可用的设备（GPU、CPURAM）上自动分配这些权重，所以如果你正在加载一个分片检查点，最大的RAM使用量将是最大分片的大小。
                 # https://www.cnblogs.com/xiximayou/p/17345539.html
-                model = recursively_load_model(LoaderClass,
-                           checkpoint,kwargs=params)
+                if "gptq" in self.model_name.lower():
+                    model = recursively_load_model(LoaderClass,checkpoint,model_basename=self.model_basename,kwargs=params)
+                else:
+                    model = recursively_load_model(LoaderClass,checkpoint,kwargs=params)
             # 可以通过hf_device_map来查看accelerate挑选的设备图
             except ImportError as exc:
                 raise ValueError(

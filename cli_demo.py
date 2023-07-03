@@ -13,7 +13,8 @@ REPLY_WITH_SOURCE = True
 模型的调用逻辑：
 1. from configs.model_config import *时，加载所有配置信息，同时打印llm_device等基础配置信息；
 2. from models.loaders.args import parser,var(parser)加载命令行配置信息；
-3. shared.loaderCheckPoint = LoaderCheckPoint(args_dict),初始化LoaderCheckPoint，并赋值给shared.loaderCheckPoint
+3. shared.loaderCheckPoint = LoaderCheckPoint(args_dict),初始化LoaderCheckPoint，
+    并赋值给shared.loaderCheckPoint，故loaderCheckpoint的初始化信息是由命令行提供，与llm_dict无关
 4. 实例化shared.loaderLLM，shared.py import configs.model_config.llm_model_dict,llm_model_dict将模型其他配置信息
     传给LoaderCheckPoint,基于provides信息，LoaderCheckPoint调用unload_model或reload_model方法:
     若调用unload_model则依次删除model和tokenizer，因此该方法适用于远程调用
