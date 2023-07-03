@@ -141,10 +141,15 @@ llm_model_dict = {
         "local_model_path":f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--guanaco-65B-GGML/blobs/''',
         "provides": "LLamaLLM"
     },
+    # 使用gptq版本的模型需要安装auto-gptq包，如果使用pip install auto-gptq报错
+    # ERROR: Could not build wheels for auto-gptq, which is required to install pyproject.toml-based projects
+    # 则需要手动下载wheel文件安装
+    # https://huggingface.co/TheBloke/guanaco-65B-GPTQ/discussions/16
     "guanaco-65b-gptq":{
         "name":"guanaco-65b-gptq",
         "pretrained_model_name":"TheBloke/guanaco-65B-GPTQ",
-        "local_model_path":None,
+        "model_basename": "Guanaco-65B-GPTQ-4bit.act-order",
+        "local_model_path":None, #f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--guanaco-65B-GGML/snapshots/c1a31c76e7228a13bc542b25243b912f12e39c87/Guanaco-65B-GPTQ-4bit.act-order.safetensors''',
         "provides":"LLamaLLM"
     },
     # 占用约63-66G内存，--load-in-int8,约占用35G显存
@@ -193,7 +198,7 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "guanaco-33b"
+LLM_MODEL = "guanaco-65b-gptq"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = True
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.

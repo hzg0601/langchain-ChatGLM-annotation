@@ -14,6 +14,7 @@ from configs.model_config import LLM_DEVICE
 
 def recursively_load_model(LoaderClass,
                            checkpoint,
+                           model_basename=None,
                            config=None,
                            torch_dtype=None,
                            trust_remote_code=True, 
@@ -26,8 +27,17 @@ def recursively_load_model(LoaderClass,
     try_turn = 0
     while True:
         try:
-            
-            if config is not None:
+            if "gptq" in checkpoint.lower():
+
+                from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+                model = AutoGPTQForCausalLM.from_quantized(checkpoint,
+                            model_basename=model_basename,
+                            use_safetensors=True,
+                            trust_remote_code=True,
+                            device="cuda",
+                            use_triton=False,
+                            quantize_config=None)
+            elif config is not None:
                 print(config,checkpoint)
                 print("*"*80)
                 model = LoaderClass.from_pretrained(checkpoint,
@@ -97,6 +107,7 @@ class LoaderCheckPoint:
         self.params = params or {}
         self.model_name = params.get('model_name', False)
         self.model_path = params.get('model_path', None)
+        # self.model_basename = params.get("model_basename",None)
         self.no_remote_model = params.get('no_remote_model', False)
         self.lora = params.get('lora', '')
         self.use_ptuning_v2 = params.get('use_ptuning_v2', False)
@@ -164,6 +175,7 @@ class LoaderCheckPoint:
                     model = (
                         recursively_load_model(LoaderClass,
                                                checkpoint,
+                                               model_basename=self.model_basename,
                                                 config=self.model_config,
                                                 torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
                                                 trust_remote_code=True)
@@ -175,6 +187,7 @@ class LoaderCheckPoint:
                     model = recursively_load_model(LoaderClass,
                                              checkpoint,
                                             config=self.model_config,
+                                             model_basename=self.model_basename,
                                             torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
                                             trust_remote_code=True).half().to(self.llm_device)
                 else:
@@ -183,6 +196,7 @@ class LoaderCheckPoint:
                     model = recursively_load_model(LoaderClass,
                                              checkpoint,
                                             config=self.model_config,
+                                             model_basename=self.model_basename,
                                             torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
                                             trust_remote_code=True).half()
                     # 可传入device_map自定义每张卡的部署情况
