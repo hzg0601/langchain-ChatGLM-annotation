@@ -152,6 +152,13 @@ llm_model_dict = {
         "local_model_path":None, #f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--guanaco-65B-GGML/snapshots/c1a31c76e7228a13bc542b25243b912f12e39c87/Guanaco-65B-GPTQ-4bit.act-order.safetensors''',
         "provides":"LLamaLLM"
     },
+    "wizardcoder-15b-gptq"{
+        "name": "wizardcoder-15b-gptq",
+        "model_basename":"gptq_model-4bit-128g.safetensors",
+        "pretrained_model_name":"TheBloke/WizardCoder-15B-1.0-GPTQ",
+        "local_model_path":None,
+        "provides":"MossLLM"
+    }
     # 占用约63-66G内存，--load-in-int8,约占用35G显存
     "guanaco-33b":{
         "name": "guanaco-33b",
