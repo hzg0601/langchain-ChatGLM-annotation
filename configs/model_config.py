@@ -90,7 +90,7 @@ llm_model_dict = {
     "vicuna-13b-hf": {
         "name": "vicuna-13b-hf",
         "pretrained_model_name": "TheBloke/vicuna-13B-1.1-HF",
-        "local_model_path": None,
+        "local_model_path": f'''{"/".join(os.path.abspath(__file__).split("/")[:3])}/.cache/huggingface/hub/models--TheBloke--vicuna-13B-1.1-HF/snapshots/0825072bf28d1b74c4ceeab248db1bf0bbd4eb6e/''',
         "provides": "LLamaLLM"
     },    
     # 直接调用返回requests.exceptions.ConnectionError错误，需要通过huggingface_hub包里的snapshot_download函数
@@ -205,7 +205,7 @@ llm_model_dict = {
 
 # LLM 名称
 #! bug: 调用fastchat接口时，若openai版本为0.27.6，则会raise AttributeError: 'str' object has no attribute 'get' 
-LLM_MODEL = "guanaco-65b-gptq"
+LLM_MODEL = "vicuna-13b-hf"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = True
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.

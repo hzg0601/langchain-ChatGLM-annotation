@@ -1,3 +1,8 @@
+2023-07-04：
+
+1. 修复为支持gptq模型而引入的加载本地模型的bug;
+2. 探索加载gptq模型识别的原因：显存不足
+
 2023-07-02新增的特性和修复的bug包括：
 
 1. 增加了通过winscp从windows转移huggingface hub的repo时出现重复上传数据的处理脚本batch_mv_data.sh

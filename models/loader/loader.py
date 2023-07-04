@@ -27,7 +27,9 @@ def recursively_load_model(LoaderClass,
     try_turn = 0
     while True:
         try:
-            if "gptq" in checkpoint.lower():
+
+            if ((isinstance(checkpoint, str) and "gptq" in checkpoint.lower()) or 
+                (isinstance(checkpoint, Path) and "gptq" in checkpoint._str.lower())):
 
                 from auto_gptq import AutoGPTQForCausalLM
                 # todo 使用cuda117的auto_gptq会报错：
