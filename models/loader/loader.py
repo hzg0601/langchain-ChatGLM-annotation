@@ -209,12 +209,15 @@ class LoaderCheckPoint:
                                             trust_remote_code=True).half()
                     # 可传入device_map自定义每张卡的部署情况
                     if self.device_map is None:
+
                         if 'chatglm' in model_name.lower() and "chatglm2" not in model_name.lower():
                             self.device_map = self.chatglm_auto_configure_device_map(num_gpus)
                         elif 'moss' in model_name.lower():
                             self.device_map = self.moss_auto_configure_device_map(num_gpus, model_name)
                             # todo (hzg0601) 优化guanaco-33b模型的GPU负载 -> done
-                        elif "chatglm2" in model_name.lower() or "guanaco-33b" in model_name.lower():
+                        # elif "chatglm2" in model_name.lower() or "guanaco-33b" in model_name.lower():
+                        else:
+                            # 以max_memory和infer_auto_device_map作为默认的负载方案
                             from accelerate.utils import get_balanced_memory
                             max_memory = get_balanced_memory(model, 
                                                                 dtype=torch.int8 if self.load_in_8bit else None,
@@ -224,17 +227,17 @@ class LoaderCheckPoint:
                                                                dtype=torch.float16 if not self.load_in_8bit else torch.int8, 
                                                                max_memory=max_memory,
                                                                no_split_module_classes=model._no_split_modules)
-                        else:
-                            # 对于chaglm和moss意外的模型应使用自动指定，而非调用chatglm的配置方式
-                            # 其他模型定义的层类几乎不可能与chatglm和moss一致，使用chatglm_auto_configure_device_map
-                            # 百分百会报错，使用infer_auto_device_map虽然可能导致负载不均衡，划掉~但至少不会报错~
-                            # 实测部分模型还是会报错，只能说是增加了一些成功机会吧
-                            # print(dir(model))
-                            # print("*"*80)
-                            # model.tie_weights()
-                            self.device_map = infer_auto_device_map(model,
-                                                                    dtype=torch.int8,
-                                                                    no_split_module_classes=model._no_split_modules)
+                        # else:
+                        #     # 对于chaglm和moss意外的模型应使用自动指定，而非调用chatglm的配置方式
+                        #     # 其他模型定义的层类几乎不可能与chatglm和moss一致，使用chatglm_auto_configure_device_map
+                        #     # 百分百会报错，使用infer_auto_device_map虽然可能导致负载不均衡，划掉~但至少不会报错~
+                        #     # 实测部分模型还是会报错，只能说是增加了一些成功机会吧
+                        #     # print(dir(model))
+                        #     # print("*"*80)
+                        #     # model.tie_weights()
+                        #     self.device_map = infer_auto_device_map(model,
+                        #                                             dtype=torch.int8,
+                        #                                             no_split_module_classes=model._no_split_modules)
                     
                     model = dispatch_model(model, device_map=self.device_map)
             else:
